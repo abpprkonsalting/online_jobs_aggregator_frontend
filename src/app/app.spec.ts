@@ -94,6 +94,19 @@ describe('App', () => {
       .toContain('We couldn’t find that page');
   });
 
+  it('redirects signed-out visitors from account routes and preserves their destination', async () => {
+    const fixture = TestBed.createComponent(App);
+    const router = TestBed.inject(Router);
+    await router.navigateByUrl('/account?tab=interests');
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(router.url.startsWith('/sign-in')).toBe(true);
+    expect(router.parseUrl(router.url).queryParams['returnUrl'])
+      .toBe('/account?tab=interests');
+    expect((fixture.nativeElement as HTMLElement).querySelector('#sign-in-title')).not.toBeNull();
+  });
+
   it('surfaces unexpected session restoration errors in the application shell', async () => {
     setRestoreError(new ApiError('Authentication service unavailable', 'server', 503));
     const fixture = TestBed.createComponent(App);

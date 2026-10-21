@@ -1,6 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ApiError } from '../../../core/http/api-error';
 import { AuthApiService } from '../data-access/auth-api.service';
 import { AuthSessionService } from '../data-access/auth-session.service';
@@ -170,6 +170,7 @@ import { AuthSessionService } from '../data-access/auth-session.service';
 export class SignInPage {
   private readonly authApi = inject(AuthApiService);
   private readonly session = inject(AuthSessionService);
+  private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
   protected readonly submitted = signal(false);
@@ -199,7 +200,7 @@ export class SignInPage {
     this.authApi.login(credentials).subscribe({
       next: (response) => {
         this.session.setSession(response.access_token, response.user);
-        void this.router.navigateByUrl('/jobs');
+        void this.router.navigateByUrl(this.destinationAfterSignIn());
       },
       error: (error: ApiError) => {
         this.submitting.set(false);
@@ -210,5 +211,15 @@ export class SignInPage {
 
   protected clearError(): void {
     this.errorMessage.set(null);
+  }
+
+  private destinationAfterSignIn(): string {
+    const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+    return returnUrl !== null
+      && returnUrl.startsWith('/')
+      && !returnUrl.startsWith('//')
+      && !returnUrl.includes('\\')
+      ? returnUrl
+      : '/jobs';
   }
 }

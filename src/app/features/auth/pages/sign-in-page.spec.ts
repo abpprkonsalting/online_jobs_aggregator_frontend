@@ -31,8 +31,8 @@ describe('SignInPage', () => {
 
   afterEach(() => httpTesting.verify());
 
-  async function openSignIn() {
-    harness = await RouterTestingHarness.create('/sign-in');
+  async function openSignIn(path = '/sign-in') {
+    harness = await RouterTestingHarness.create(path);
     harness.detectChanges();
     return harness;
   }
@@ -112,6 +112,42 @@ describe('SignInPage', () => {
       email: 'user@example.com',
       role: 'user',
     });
+    expect(TestBed.inject(Router).url).toBe('/jobs');
+    httpTesting.expectOne('/api/jobs').flush({
+      jobs: [],
+      total: 0,
+      limit: 20,
+      offset: 0,
+      hasMore: false,
+    });
+  });
+
+  it('returns to the protected destination after successful sign-in', async () => {
+    const pageHarness = await openSignIn('/sign-in?returnUrl=%2Faccount%3Ftab%3Dinterests');
+    const page = pageHarness.routeNativeElement as HTMLElement;
+    setCredentials(page, 'user@example.com', 'correct-horse');
+    (page.querySelector('button[type="submit"]') as HTMLButtonElement).click();
+    httpTesting.expectOne('/api/auth/login').flush({
+      access_token: 'access-token',
+      user: { id: 'user-1', email: 'user@example.com', role: 'user' },
+    });
+    await pageHarness.fixture.whenStable();
+
+    expect(TestBed.inject(Router).url).toBe('/account?tab=interests');
+    expect(pageHarness.routeNativeElement?.querySelector('h1')?.textContent).toContain('Your account');
+  });
+
+  it('uses the jobs page instead of an external return URL', async () => {
+    const pageHarness = await openSignIn('/sign-in?returnUrl=https%3A%2F%2Fevil.example');
+    const page = pageHarness.routeNativeElement as HTMLElement;
+    setCredentials(page, 'user@example.com', 'correct-horse');
+    (page.querySelector('button[type="submit"]') as HTMLButtonElement).click();
+    httpTesting.expectOne('/api/auth/login').flush({
+      access_token: 'access-token',
+      user: { id: 'user-1', email: 'user@example.com', role: 'user' },
+    });
+    await pageHarness.fixture.whenStable();
+
     expect(TestBed.inject(Router).url).toBe('/jobs');
     httpTesting.expectOne('/api/jobs').flush({
       jobs: [],

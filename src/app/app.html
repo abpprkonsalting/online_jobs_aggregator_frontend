@@ -14,6 +14,9 @@
           Categories
         </a>
         @if (authSession.isAuthenticated()) {
+          <a routerLink="/account" routerLinkActive="active" ariaCurrentWhenActive="page">
+            Account
+          </a>
           <span class="account-email">{{ authSession.currentUser()?.email }}</span>
           <button
             type="button"

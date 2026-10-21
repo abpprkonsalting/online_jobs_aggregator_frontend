@@ -145,7 +145,7 @@ Work items are intentionally small enough to review and commit independently. Us
 - [x] **F2.5 — Add sign-out behavior.** Call logout, clear in-memory identity/token state, and return the user to a public route even if the API reports a recoverable logout error.
   **Accept when:** no protected UI remains available after sign-out.  
   **Commit scope:** `feat(frontend): add sign-out flow`
-- [ ] **F2.6 — Protect authenticated routes.** Add an authentication guard and signed-in navigation state without treating client-side guards as a security boundary.  
+- [x] **F2.6 — Protect authenticated routes.** Add an authentication guard and signed-in navigation state without treating client-side guards as a security boundary.
   **Accept when:** signed-out users are redirected to sign-in and can return to their intended route after authentication.  
   **Commit scope:** `feat(frontend): protect authenticated routes`
 - [ ] **F2.7 — Add user-interest API methods.** Implement list/add/remove category-interest operations for the current user's ID.  
