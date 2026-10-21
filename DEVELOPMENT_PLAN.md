@@ -98,7 +98,7 @@ Work items are intentionally small enough to review and commit independently. Us
 - [x] **F1.1 — Add the jobs API service.** Implement typed list and detail requests, including query parameter serialization for currently supported pagination and sort fields.
   **Accept when:** service tests verify URL/query construction and list/detail response handling.  
   **Commit scope:** `feat(frontend): add jobs API service`
-- [ ] **F1.2 — Load filter reference data.** Add typed services and loading states for categories, skills, cities, countries, and sources only where their read endpoints are confirmed.  
+- [x] **F1.2 — Load filter reference data.** Add typed services and loading states for categories, skills, cities, countries, and sources only where their read endpoints are confirmed.
   **Accept when:** reference data loads independently and failures do not block the job list.  
   **Commit scope:** `feat(frontend): load job filter reference data`
 - [ ] **F1.3 — Build the job-search page layout.** Add the job-search route, page heading, results region, and responsive space for filters.  

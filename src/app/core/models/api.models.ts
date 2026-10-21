@@ -92,3 +92,15 @@ export interface Country {
   name: string;
   code: string | null;
 }
+
+export type SourceType = 'api' | 'scrape' | 'hybrid';
+
+export type SourceWorkingMode = 'passive' | 'proactive' | 'both';
+
+export interface Source {
+  id: string;
+  name: string;
+  type: SourceType;
+  working_mode: SourceWorkingMode;
+  enabled: number;
+}
