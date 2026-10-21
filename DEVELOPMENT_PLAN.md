@@ -84,7 +84,7 @@ Work items are intentionally small enough to review and commit independently. Us
 - [x] **F0.5 — Define shared API types.** Add typed request/response models only for verified backend shapes needed by the initial job and master-data screens. Keep uncertain fields optional and document them in code through the types rather than guessing.
   **Accept when:** the API model layer type-checks and has no direct database-model assumptions.  
   **Commit scope:** `feat(frontend): define initial API contracts`
-- [ ] **F0.6 — Add shared HTTP and error handling.** Centralize API configuration and provide a consistent typed representation for network, validation, authorization, and server errors.  
+- [x] **F0.6 — Add shared HTTP and error handling.** Centralize API configuration and provide a consistent typed representation for network, validation, authorization, and server errors.
   **Accept when:** a small service test verifies successful response handling and representative backend error responses.  
   **Commit scope:** `feat(frontend): add API client and error handling`
 - [ ] **F0.7 — Set up frontend quality checks.** Configure the project's lint, build, and test commands and add a minimal passing test.  

@@ -14,6 +14,8 @@ Once the server is running, open your browser and navigate to `http://localhost:
 
 API requests use the `/api` base URL in both development and production. During local development, the Angular server forwards `/api/**` requests to `http://127.0.0.1:3000` using [proxy.conf.json](./proxy.conf.json). For production, configure the web server or deployment platform to route `/api` to the backend on the same origin.
 
+Feature services should use the shared `ApiClient` from `src/app/core/http/api-client.ts`. HTTP failures are normalized to `ApiError` values, including network, validation, authentication, authorization, and server failures. Set `withCredentials: true` only for requests that need browser-managed cookies.
+
 ## Code scaffolding
 
 Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
