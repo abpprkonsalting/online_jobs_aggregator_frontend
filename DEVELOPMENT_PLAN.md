@@ -81,7 +81,7 @@ Work items are intentionally small enough to review and commit independently. Us
 - [x] **F0.4 — Establish routing and application shell.** Add the root layout, primary navigation placeholders, page outlet, not-found route, and baseline responsive styles.
   **Accept when:** routes render inside a consistent shell at narrow and wide viewport sizes.  
   **Commit scope:** `feat(frontend): add application shell and routes`
-- [ ] **F0.5 — Define shared API types.** Add typed request/response models only for verified backend shapes needed by the initial job and master-data screens. Keep uncertain fields optional and document them in code through the types rather than guessing.  
+- [x] **F0.5 — Define shared API types.** Add typed request/response models only for verified backend shapes needed by the initial job and master-data screens. Keep uncertain fields optional and document them in code through the types rather than guessing.
   **Accept when:** the API model layer type-checks and has no direct database-model assumptions.  
   **Commit scope:** `feat(frontend): define initial API contracts`
 - [ ] **F0.6 — Add shared HTTP and error handling.** Centralize API configuration and provide a consistent typed representation for network, validation, authorization, and server errors.  
