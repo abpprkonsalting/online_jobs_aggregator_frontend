@@ -12,6 +12,8 @@ ng serve
 
 Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
 
+API requests use the `/api` base URL in both development and production. During local development, the Angular server forwards `/api/**` requests to `http://127.0.0.1:3000` using [proxy.conf.json](./proxy.conf.json). For production, configure the web server or deployment platform to route `/api` to the backend on the same origin.
+
 ## Code scaffolding
 
 Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
