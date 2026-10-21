@@ -7,7 +7,7 @@
   },
   "newProjectRoot": "projects",
   "projects": {
-    "map-rezi-frontend": {
+    "online-jobs-aggregator": {
       "projectType": "application",
       "schematics": {},
       "root": "",
@@ -66,10 +66,10 @@
           },
           "configurations": {
             "production": {
-              "buildTarget": "map-rezi-frontend:build:production"
+              "buildTarget": "online-jobs-aggregator:build:production"
             },
             "development": {
-              "buildTarget": "map-rezi-frontend:build:development"
+              "buildTarget": "online-jobs-aggregator:build:development"
             }
           },
           "defaultConfiguration": "development"

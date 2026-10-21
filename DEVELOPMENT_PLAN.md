@@ -78,7 +78,7 @@ Work items are intentionally small enough to review and commit independently. Us
 - [x] **F0.3 — Add environment and local API configuration.** Configure development and production API base URLs, and add a development proxy if needed. Keep credentials and deployment secrets out of source control.
   **Accept when:** a local app request reaches the intended backend without hard-coded environment-specific URLs in feature code.  
   **Commit scope:** `build(frontend): configure API environments`
-- [ ] **F0.4 — Establish routing and application shell.** Add the root layout, primary navigation placeholders, page outlet, not-found route, and baseline responsive styles.  
+- [x] **F0.4 — Establish routing and application shell.** Add the root layout, primary navigation placeholders, page outlet, not-found route, and baseline responsive styles.
   **Accept when:** routes render inside a consistent shell at narrow and wide viewport sizes.  
   **Commit scope:** `feat(frontend): add application shell and routes`
 - [ ] **F0.5 — Define shared API types.** Add typed request/response models only for verified backend shapes needed by the initial job and master-data screens. Keep uncertain fields optional and document them in code through the types rather than guessing.  
