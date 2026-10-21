@@ -130,7 +130,7 @@ Work items are intentionally small enough to review and commit independently. Us
 
 ### Phase 2 — Authentication and interests
 
-- [ ] **F2.1 — Add authentication API methods.** Implement login, refresh, current-user, and logout calls using the verified auth response contracts.  
+- [x] **F2.1 — Add authentication API methods.** Implement login, refresh, current-user, and logout calls using the verified auth response contracts.
   **Accept when:** service tests cover success and common 401/error responses; refresh requests use credentials.  
   **Commit scope:** `feat(frontend): add authentication API service`
 - [ ] **F2.2 — Add in-memory session state.** Store the access token and current user in application memory, expose signed-in state, and attach the access token to protected requests.  
