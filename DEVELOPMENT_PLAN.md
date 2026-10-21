@@ -87,7 +87,7 @@ Work items are intentionally small enough to review and commit independently. Us
 - [x] **F0.6 — Add shared HTTP and error handling.** Centralize API configuration and provide a consistent typed representation for network, validation, authorization, and server errors.
   **Accept when:** a small service test verifies successful response handling and representative backend error responses.  
   **Commit scope:** `feat(frontend): add API client and error handling`
-- [ ] **F0.7 — Set up frontend quality checks.** Configure the project's lint, build, and test commands and add a minimal passing test.  
+- [x] **F0.7 — Set up frontend quality checks.** Configure the project's lint, build, and test commands and add a minimal passing test.
   **Accept when:** all three commands run locally from the frontend project.  
   **Commit scope:** `test(frontend): add baseline quality checks`
 

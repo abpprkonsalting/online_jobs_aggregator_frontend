@@ -40,6 +40,14 @@ ng build
 
 This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
 
+## Linting
+
+To lint TypeScript and Angular templates, run:
+
+```bash
+npm run lint
+```
+
 ## Running unit tests
 
 To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
