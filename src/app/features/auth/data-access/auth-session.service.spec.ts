@@ -1,11 +1,25 @@
 import { TestBed } from '@angular/core/testing';
+import { of } from 'rxjs';
+import { AuthApiService } from './auth-api.service';
 import { AuthSessionService } from './auth-session.service';
 
 describe('AuthSessionService', () => {
   let session: AuthSessionService;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({});
+    TestBed.configureTestingModule({
+      providers: [{
+        provide: AuthApiService,
+        useValue: {
+          refresh: () => of({ access_token: 'restored-token' }),
+          getCurrentUser: () => of({
+            id: 'restored-user',
+            email: 'user@example.com',
+            role: 'user',
+          }),
+        },
+      }],
+    });
     session = TestBed.inject(AuthSessionService);
   });
 

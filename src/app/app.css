@@ -103,6 +103,30 @@
   background: var(--color-accent-dark);
 }
 
+.session-warning {
+  display: flex;
+  width: min(100% - 3rem, 72rem);
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 1rem auto 0;
+  padding: 0.9rem 1rem;
+  border: 1px solid #e8b2a4;
+  border-radius: 0.7rem;
+  background: #fff0ec;
+  color: #78351f;
+}
+
+.session-warning p {
+  margin: 0;
+}
+
+.session-warning a {
+  flex: 0 0 auto;
+  color: inherit;
+  font-weight: 650;
+}
+
 .page-main {
   width: min(100% - 3rem, 72rem);
   flex: 1;
@@ -154,6 +178,12 @@
   .page-main {
     width: min(100% - 2rem, 72rem);
     padding-block: 3.5rem;
+  }
+
+  .session-warning {
+    width: min(100% - 2rem, 72rem);
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .site-footer p {

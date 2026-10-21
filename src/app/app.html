@@ -25,6 +25,13 @@
     </div>
   </header>
 
+  @if (authSession.restoreError(); as error) {
+    <aside class="session-warning" role="alert">
+      <p>We couldn’t restore your sign-in session. {{ error.message }}</p>
+      <a routerLink="/sign-in">Sign in again</a>
+    </aside>
+  }
+
   <main class="page-main" id="main-content">
     <router-outlet />
   </main>
