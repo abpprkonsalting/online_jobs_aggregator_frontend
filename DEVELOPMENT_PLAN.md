@@ -72,7 +72,7 @@ Work items are intentionally small enough to review and commit independently. Us
 - [ ] **F0.1 — Verify the development API contract.** Check the API base path, available routes, representative response/error shapes, CORS origin policy, and credentialed-cookie behavior against the running backend. Record confirmed behavior and unresolved gaps in the contract checks below.  
   **Accept when:** the frontend's local API origin/proxy and cookie requirements are known.  
   **Commit scope:** `docs(frontend): record verified API integration contract`
-- [ ] **F0.2 — Create the Angular application.** Scaffold the app in `frontend/` with the selected Angular version and project defaults; do not add a component library in this task.  
+- [x] **F0.2 — Create the Angular application.** Scaffold the app in `frontend/` with the selected Angular version and project defaults; do not add a component library in this task.  
   **Accept when:** the generated development server starts and the initial app builds.  
   **Commit scope:** `build(frontend): scaffold Angular application`
 - [ ] **F0.3 — Add environment and local API configuration.** Configure development and production API base URLs, and add a development proxy if needed. Keep credentials and deployment secrets out of source control.  
