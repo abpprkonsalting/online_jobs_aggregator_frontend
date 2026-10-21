@@ -104,7 +104,7 @@ Work items are intentionally small enough to review and commit independently. Us
 - [x] **F1.3 — Build the job-search page layout.** Add the job-search route, page heading, results region, and responsive space for filters.
   **Accept when:** the page works with a mocked or empty result set and has no horizontal overflow on mobile.  
   **Commit scope:** `feat(frontend): add job search page`
-- [ ] **F1.4 — Render job result cards.** Show available title, organization, location, remote, salary, and posted-date information; gracefully omit missing fields.  
+- [x] **F1.4 — Render job result cards.** Show available title, organization, location, remote, salary, and posted-date information; gracefully omit missing fields.
   **Accept when:** representative complete and partial job records render without errors.  
   **Commit scope:** `feat(frontend): render job result cards`
 - [ ] **F1.5 — Add loading, empty, and failure states.** Provide visible loading feedback, a no-results state, and an actionable retry state for failed list requests.  
