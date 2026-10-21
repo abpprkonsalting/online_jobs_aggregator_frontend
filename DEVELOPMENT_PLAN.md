@@ -148,7 +148,7 @@ Work items are intentionally small enough to review and commit independently. Us
 - [x] **F2.6 — Protect authenticated routes.** Add an authentication guard and signed-in navigation state without treating client-side guards as a security boundary.
   **Accept when:** signed-out users are redirected to sign-in and can return to their intended route after authentication.  
   **Commit scope:** `feat(frontend): protect authenticated routes`
-- [ ] **F2.7 — Add user-interest API methods.** Implement list/add/remove category-interest operations for the current user's ID.  
+- [x] **F2.7 — Add user-interest API methods.** Implement list/add/remove category-interest operations for the current user's ID.
   **Accept when:** request and authorization behavior is covered by service tests and a backend smoke test.  
   **Commit scope:** `feat(frontend): add category interest API`
 - [ ] **F2.8 — Build category-interest settings.** Let the signed-in user view, add, and remove followed categories with loading, empty, and error states.  

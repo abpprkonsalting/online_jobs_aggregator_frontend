@@ -1,3 +1,5 @@
+import { Category } from '../../../core/models/api.models';
+
 export type UserRole = 'admin' | 'user';
 
 export interface AuthUser {
@@ -21,5 +23,19 @@ export interface RefreshResponse {
 }
 
 export interface LogoutResponse {
+  success: boolean;
+}
+
+export interface UserCategoryInterest extends Category {
+  enabled: number;
+  created_at: string;
+}
+
+export interface UserCategoryInterestMutation {
+  user_id: string;
+  category_id: string;
+}
+
+export interface UserCategoryInterestDeleteResponse {
   success: boolean;
 }
