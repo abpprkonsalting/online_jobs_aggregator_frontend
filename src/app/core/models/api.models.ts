@@ -22,6 +22,23 @@ export interface JobListResponse {
   hasMore: boolean;
 }
 
+export type JobSortField =
+  | 'posted_at'
+  | 'date_posted'
+  | 'title'
+  | 'organization'
+  | 'salary_min'
+  | 'salary_max';
+
+export type SortDirection = 'asc' | 'desc';
+
+export interface JobListQuery {
+  limit?: number;
+  offset?: number;
+  sort?: JobSortField;
+  sortDir?: SortDirection;
+}
+
 export interface JobSkill {
   id: string;
   name: string;

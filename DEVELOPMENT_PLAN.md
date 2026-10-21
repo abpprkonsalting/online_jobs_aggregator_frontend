@@ -95,7 +95,7 @@ Work items are intentionally small enough to review and commit independently. Us
 
 ### Phase 1 — Job discovery
 
-- [ ] **F1.1 — Add the jobs API service.** Implement typed list and detail requests, including query parameter serialization for currently supported pagination and sort fields.  
+- [x] **F1.1 — Add the jobs API service.** Implement typed list and detail requests, including query parameter serialization for currently supported pagination and sort fields.
   **Accept when:** service tests verify URL/query construction and list/detail response handling.  
   **Commit scope:** `feat(frontend): add jobs API service`
 - [ ] **F1.2 — Load filter reference data.** Add typed services and loading states for categories, skills, cities, countries, and sources only where their read endpoints are confirmed.  
