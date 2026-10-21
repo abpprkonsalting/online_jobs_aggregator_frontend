@@ -1,14 +1,16 @@
 import { Component, computed, input } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { JobListItem } from '../../../core/models/api.models';
 
 @Component({
   selector: 'app-job-result-card',
+  imports: [RouterLink],
   template: `
     <article class="job-card">
       <div class="card-content">
         <div class="card-heading">
           <h2>
-            <a [href]="job().job_url" target="_blank" rel="noopener noreferrer">
+            <a [routerLink]="['/jobs', job().id]">
               {{ job().title }}
             </a>
           </h2>

@@ -122,7 +122,7 @@ Work items are intentionally small enough to review and commit independently. Us
 - [x] **F1.9 — Add pagination.** Use the verified response metadata to page through results and reset pagination when search criteria change.
   **Accept when:** next/previous controls respect the first/last page and totals or `hasMore` values returned by the API.  
   **Commit scope:** `feat(frontend): paginate job results`
-- [ ] **F1.10 — Build job detail view.** Add a detail route and render verified description, categories, skills, location, salary, posted/waiting time, and source link fields.  
+- [x] **F1.10 — Build job detail view.** Add a detail route and render verified description, categories, skills, location, salary, posted/waiting time, and source link fields.
   **Accept when:** direct navigation to a valid job works, missing jobs show not-found, and missing optional data is handled.  
   **Commit scope:** `feat(frontend): add job detail view`
 

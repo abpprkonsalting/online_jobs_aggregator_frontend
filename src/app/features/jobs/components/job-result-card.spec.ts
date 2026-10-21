@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { JobListItem } from '../../../core/models/api.models';
 import { JobResultCard } from './job-result-card';
 
@@ -22,6 +23,7 @@ describe('JobResultCard', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [JobResultCard],
+      providers: [provideRouter([])],
     }).compileComponents();
   });
 
@@ -34,9 +36,7 @@ describe('JobResultCard', () => {
     const card = fixture.nativeElement as HTMLElement;
     const titleLink = card.querySelector('h2 a') as HTMLAnchorElement;
     expect(titleLink.textContent).toContain('Frontend Engineer');
-    expect(titleLink.href).toBe('https://example.com/jobs/1');
-    expect(titleLink.target).toBe('_blank');
-    expect(titleLink.rel).toContain('noopener');
+    expect(titleLink.getAttribute('href')).toBe('/jobs/job-1');
     expect(card.textContent).toContain('Example Co');
     expect(card.textContent).toContain('Boston, United States');
     expect(card.textContent).toContain('Remote');
