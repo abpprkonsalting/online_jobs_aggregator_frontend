@@ -5,6 +5,7 @@ import { JobDetailPage } from './features/jobs/pages/job-detail-page';
 import { JobSearchPage } from './features/jobs/pages/job-search-page';
 import { NotFoundPage } from './pages/not-found-page';
 import { PlaceholderPage } from './pages/placeholder-page';
+import { CategoryInterestsPage } from './features/auth/pages/category-interests-page';
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'jobs' },
@@ -19,11 +20,7 @@ export const routes: Routes = [
   {
     path: 'account',
     canActivate: [authGuard],
-    component: PlaceholderPage,
-    data: {
-      title: 'Your account',
-      description: 'Your account settings will be available here.',
-    },
+    component: CategoryInterestsPage,
   },
   {
     path: 'categories',

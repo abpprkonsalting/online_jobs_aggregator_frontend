@@ -151,7 +151,7 @@ Work items are intentionally small enough to review and commit independently. Us
 - [x] **F2.7 — Add user-interest API methods.** Implement list/add/remove category-interest operations for the current user's ID.
   **Accept when:** request and authorization behavior is covered by service tests and a backend smoke test.  
   **Commit scope:** `feat(frontend): add category interest API`
-- [ ] **F2.8 — Build category-interest settings.** Let the signed-in user view, add, and remove followed categories with loading, empty, and error states.  
+- [x] **F2.8 — Build category-interest settings.** Let the signed-in user view, add, and remove followed categories with loading, empty, and error states.
   **Accept when:** changes persist after reloading the settings page and only the current user's interests are shown.  
   **Commit scope:** `feat(frontend): manage category interests`
 - [ ] **F2.9 — Agree and implement interest-to-feed behavior.** Confirm with the backend whether and how selected interests filter jobs; then connect that behavior without implying server-side personalization that does not exist.  

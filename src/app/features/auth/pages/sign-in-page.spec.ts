@@ -132,9 +132,12 @@ describe('SignInPage', () => {
       user: { id: 'user-1', email: 'user@example.com', role: 'user' },
     });
     await pageHarness.fixture.whenStable();
+    httpTesting.expectOne('/api/categories').flush([]);
+    httpTesting.expectOne('/api/users/user-1/categories').flush([]);
+    pageHarness.detectChanges();
 
     expect(TestBed.inject(Router).url).toBe('/account?tab=interests');
-    expect(pageHarness.routeNativeElement?.querySelector('h1')?.textContent).toContain('Your account');
+    expect(pageHarness.routeNativeElement?.querySelector('h1')?.textContent).toContain('Category interests');
   });
 
   it('uses the jobs page instead of an external return URL', async () => {
