@@ -119,7 +119,7 @@ Work items are intentionally small enough to review and commit independently. Us
 - [x] **F1.8 — Add sorting controls.** Expose only backend-supported sort keys and directions and make the active order apparent.
   **Accept when:** selecting a sort option changes the request and the result order matches backend behavior.  
   **Commit scope:** `feat(frontend): add job result sorting`
-- [ ] **F1.9 — Add pagination.** Use the verified response metadata to page through results and reset pagination when search criteria change.  
+- [x] **F1.9 — Add pagination.** Use the verified response metadata to page through results and reset pagination when search criteria change.
   **Accept when:** next/previous controls respect the first/last page and totals or `hasMore` values returned by the API.  
   **Commit scope:** `feat(frontend): paginate job results`
 - [ ] **F1.10 — Build job detail view.** Add a detail route and render verified description, categories, skills, location, salary, posted/waiting time, and source link fields.  

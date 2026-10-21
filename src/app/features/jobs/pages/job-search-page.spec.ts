@@ -81,6 +81,88 @@ describe('JobSearchPage', () => {
     expect(page.querySelector('[role="status"]')).toBeNull();
   });
 
+  it('paginates using API metadata and preserves the search state', async () => {
+    const pageHarness = await createPage(
+      '/jobs?organization=Example%20Co&limit=2&sort=organization&sortDir=asc',
+    );
+    const firstRequest = httpTesting.expectOne((req) => req.url === '/api/jobs');
+    expect(firstRequest.request.params.get('organization')).toBe('Example Co');
+    expect(firstRequest.request.params.get('limit')).toBe('2');
+    firstRequest.flush({
+      ...listResponse([{ ...job, id: 'job-1' }, { ...job, id: 'job-2' }]),
+      total: 5,
+      limit: 2,
+      hasMore: true,
+    });
+    pageHarness.detectChanges();
+
+    let page = pageHarness.routeNativeElement as HTMLElement;
+    expect(page.querySelector('.pagination-summary')?.textContent?.replace(/\s+/g, ' ').trim())
+      .toBe('Showing 1–2 of 5');
+    let previous = page.querySelector('.pagination-actions button:first-child') as HTMLButtonElement;
+    let next = page.querySelector('.pagination-actions button:last-child') as HTMLButtonElement;
+    expect(previous.disabled).toBe(true);
+    expect(next.disabled).toBe(false);
+
+    next.click();
+    await pageHarness.fixture.whenStable();
+    pageHarness.detectChanges();
+    let request = httpTesting.expectOne((req) => req.url === '/api/jobs');
+    expect(request.request.params.get('organization')).toBe('Example Co');
+    expect(request.request.params.get('limit')).toBe('2');
+    expect(request.request.params.get('offset')).toBe('2');
+    expect(request.request.params.get('sort')).toBe('organization');
+    expect(request.request.params.get('sortDir')).toBe('asc');
+    expect(TestBed.inject(Router).url).toContain('offset=2');
+    request.flush({
+      ...listResponse([{ ...job, id: 'job-3' }, { ...job, id: 'job-4' }]),
+      total: 5,
+      limit: 2,
+      offset: 2,
+      hasMore: true,
+    });
+    pageHarness.detectChanges();
+
+    page = pageHarness.routeNativeElement as HTMLElement;
+    previous = page.querySelector('.pagination-actions button:first-child') as HTMLButtonElement;
+    next = page.querySelector('.pagination-actions button:last-child') as HTMLButtonElement;
+    expect(previous.disabled).toBe(false);
+    expect(next.disabled).toBe(false);
+    next.click();
+    await pageHarness.fixture.whenStable();
+    pageHarness.detectChanges();
+    request = httpTesting.expectOne((req) => req.url === '/api/jobs');
+    expect(request.request.params.get('offset')).toBe('4');
+    request.flush({
+      ...listResponse([{ ...job, id: 'job-5' }]),
+      total: 5,
+      limit: 2,
+      offset: 4,
+      hasMore: false,
+    });
+    pageHarness.detectChanges();
+
+    page = pageHarness.routeNativeElement as HTMLElement;
+    expect(page.querySelector('.pagination-summary')?.textContent?.replace(/\s+/g, ' ').trim())
+      .toBe('Showing 5–5 of 5');
+    previous = page.querySelector('.pagination-actions button:first-child') as HTMLButtonElement;
+    next = page.querySelector('.pagination-actions button:last-child') as HTMLButtonElement;
+    expect(previous.disabled).toBe(false);
+    expect(next.disabled).toBe(true);
+    previous.click();
+    await pageHarness.fixture.whenStable();
+    pageHarness.detectChanges();
+    request = httpTesting.expectOne((req) => req.url === '/api/jobs');
+    expect(request.request.params.get('offset')).toBe('2');
+    request.flush({
+      ...listResponse([{ ...job, id: 'job-3' }, { ...job, id: 'job-4' }]),
+      total: 5,
+      limit: 2,
+      offset: 2,
+      hasMore: true,
+    });
+  });
+
   it('shows an empty state when the API returns no jobs', async () => {
     const pageHarness = await createPage();
     httpTesting.expectOne('/api/jobs').flush(listResponse([]));
@@ -139,6 +221,37 @@ describe('JobSearchPage', () => {
     expect(page.querySelector('[role="alert"]')?.textContent)
       .toContain('Minimum salary must not exceed maximum salary');
     httpTesting.expectNone((req) => req.url === '/api/jobs');
+  });
+
+  it('resets the offset when search criteria change while preserving page size and sort', async () => {
+    const pageHarness = await createPage(
+      '/jobs?organization=Example%20Co&limit=10&offset=20&sort=organization&sortDir=asc',
+    );
+    httpTesting.expectOne((req) => req.url === '/api/jobs').flush({
+      ...listResponse([job]),
+      total: 40,
+      limit: 10,
+      offset: 20,
+      hasMore: true,
+    });
+    pageHarness.detectChanges();
+
+    const page = pageHarness.routeNativeElement as HTMLElement;
+    const organization = page.querySelector('#organization') as HTMLInputElement;
+    organization.value = 'Other Company';
+    organization.dispatchEvent(new Event('input', { bubbles: true }));
+    (page.querySelector('.apply-button') as HTMLButtonElement).click();
+    await pageHarness.fixture.whenStable();
+    pageHarness.detectChanges();
+
+    const request = httpTesting.expectOne((req) => req.url === '/api/jobs');
+    expect(request.request.params.get('organization')).toBe('Other Company');
+    expect(request.request.params.get('limit')).toBe('10');
+    expect(request.request.params.has('offset')).toBe(false);
+    expect(request.request.params.get('sort')).toBe('organization');
+    expect(request.request.params.get('sortDir')).toBe('asc');
+    expect(TestBed.inject(Router).url).not.toContain('offset=');
+    request.flush(listResponse([]));
   });
 
   it('applies verified sort options and sends the selected direction', async () => {

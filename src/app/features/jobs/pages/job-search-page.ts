@@ -162,6 +162,30 @@ const salaryRangeValidator: ValidatorFn = (control: AbstractControl): Validation
                     <app-job-result-card [job]="job" />
                   }
                 </div>
+                <nav class="pagination" aria-label="Job result pages">
+                  <p class="pagination-summary" aria-live="polite">
+                    Showing {{ currentState.value.offset + 1 }}–{{ currentState.value.offset + currentState.value.jobs.length }}
+                    of {{ currentState.value.total }}
+                  </p>
+                  <div class="pagination-actions">
+                    <button
+                      type="button"
+                      class="clear-button"
+                      [disabled]="currentState.value.offset <= 0"
+                      (click)="changePage(currentState.value, -1)"
+                    >
+                      Previous
+                    </button>
+                    <button
+                      type="button"
+                      class="clear-button"
+                      [disabled]="!currentState.value.hasMore"
+                      (click)="changePage(currentState.value, 1)"
+                    >
+                      Next
+                    </button>
+                  </div>
+                </nav>
               }
             }
           }
@@ -367,6 +391,15 @@ const salaryRangeValidator: ValidatorFn = (control: AbstractControl): Validation
       padding: 1rem;
     }
 
+    .pagination {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 0 1rem 1rem;
+    }
+
     .empty-results {
       display: flex;
       min-height: 17rem;
@@ -544,6 +577,26 @@ export class JobSearchPage implements OnInit {
     this.jobsApi.list(query).subscribe({
       next: (value) => this.state.set({ status: 'loaded', value }),
       error: (error: ApiError) => this.state.set({ status: 'error', error }),
+    });
+  }
+
+  protected changePage(response: JobListResponse, direction: -1 | 1): void {
+    if ((direction === -1 && response.offset <= 0) || (direction === 1 && !response.hasMore)) {
+      return;
+    }
+
+    const offset = direction === -1
+      ? Math.max(0, response.offset - response.limit)
+      : response.offset + response.limit;
+    const query: JobListQuery = {
+      ...this.currentQuery,
+      limit: response.limit,
+      offset,
+    };
+
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: this.toUrlParams(query),
     });
   }
 
