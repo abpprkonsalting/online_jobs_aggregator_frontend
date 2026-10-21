@@ -13,14 +13,26 @@
         <a routerLink="/categories" routerLinkActive="active" ariaCurrentWhenActive="page">
           Categories
         </a>
-        <a
-          class="sign-in-link"
-          routerLink="/sign-in"
-          routerLinkActive="active"
-          ariaCurrentWhenActive="page"
-        >
-          Sign in
-        </a>
+        @if (authSession.isAuthenticated()) {
+          <span class="account-email">{{ authSession.currentUser()?.email }}</span>
+          <button
+            type="button"
+            class="sign-out-button"
+            [disabled]="signingOut()"
+            (click)="signOut()"
+          >
+            {{ signingOut() ? 'Signing out…' : 'Sign out' }}
+          </button>
+        } @else {
+          <a
+            class="sign-in-link"
+            routerLink="/sign-in"
+            routerLinkActive="active"
+            ariaCurrentWhenActive="page"
+          >
+            Sign in
+          </a>
+        }
       </nav>
     </div>
   </header>
@@ -29,6 +41,11 @@
     <aside class="session-warning" role="alert">
       <p>We couldn’t restore your sign-in session. {{ error.message }}</p>
       <a routerLink="/sign-in">Sign in again</a>
+    </aside>
+  }
+  @if (signOutMessage(); as message) {
+    <aside class="session-warning" role="alert">
+      <p>{{ message }}</p>
     </aside>
   }
 

@@ -142,7 +142,7 @@ Work items are intentionally small enough to review and commit independently. Us
 - [x] **F2.4 — Restore and refresh sessions.** On app startup, use the refresh cookie to obtain a new access token and then load the current identity; handle expired/revoked sessions cleanly.
   **Accept when:** reload restores a valid session without storing the refresh token and invalid sessions return to signed-out state.  
   **Commit scope:** `feat(frontend): restore sessions with refresh cookie`
-- [ ] **F2.5 — Add sign-out behavior.** Call logout, clear in-memory identity/token state, and return the user to a public route even if the API reports a recoverable logout error.  
+- [x] **F2.5 — Add sign-out behavior.** Call logout, clear in-memory identity/token state, and return the user to a public route even if the API reports a recoverable logout error.
   **Accept when:** no protected UI remains available after sign-out.  
   **Commit scope:** `feat(frontend): add sign-out flow`
 - [ ] **F2.6 — Protect authenticated routes.** Add an authentication guard and signed-in navigation state without treating client-side guards as a security boundary.  
