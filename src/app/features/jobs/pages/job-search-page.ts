@@ -17,16 +17,14 @@ import {
   JobListQuery,
   JobListResponse,
   JobSortField,
+  SortDirection,
 } from '../../../core/models/api.models';
 import { JobsApiService } from '../data-access/jobs-api.service';
 
 const JOB_SORT_FIELDS: ReadonlySet<string> = new Set([
   'posted_at',
   'date_posted',
-  'title',
   'organization',
-  'salary_min',
-  'salary_max',
 ]);
 
 function isJobSortField(value: string | null): value is JobSortField {
@@ -64,6 +62,19 @@ const salaryRangeValidator: ValidatorFn = (control: AbstractControl): Validation
             Filter by organization and salary. More options will be added as backend support is verified.
           </p>
           <form [formGroup]="filterForm" (ngSubmit)="applyFilters()">
+            <label for="sort-by">Sort by</label>
+            <select id="sort-by" formControlName="sort">
+              <option value="posted_at">Recently posted</option>
+              <option value="date_posted">Original posting date</option>
+              <option value="organization">Organization</option>
+            </select>
+
+            <label for="sort-direction">Direction</label>
+            <select id="sort-direction" formControlName="sortDir">
+              <option value="desc">Descending</option>
+              <option value="asc">Ascending</option>
+            </select>
+
             <label for="organization">Organization</label>
             <input
               id="organization"
@@ -255,7 +266,8 @@ const salaryRangeValidator: ValidatorFn = (control: AbstractControl): Validation
       font-weight: 650;
     }
 
-    input {
+    input,
+    select {
       width: 100%;
       min-width: 0;
       min-height: 2.65rem;
@@ -268,6 +280,11 @@ const salaryRangeValidator: ValidatorFn = (control: AbstractControl): Validation
     }
 
     input:focus-visible {
+      outline: 3px solid rgb(216 102 54 / 25%);
+      border-color: var(--color-accent);
+    }
+
+    select:focus-visible {
       outline: 3px solid rgb(216 102 54 / 25%);
       border-color: var(--color-accent);
     }
@@ -462,6 +479,8 @@ export class JobSearchPage implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   protected readonly state = signal<AsyncState<JobListResponse>>({ status: 'loading' });
   protected readonly filterForm = new FormGroup({
+    sort: new FormControl<JobSortField>('posted_at', { nonNullable: true }),
+    sortDir: new FormControl<SortDirection>('desc', { nonNullable: true }),
     organization: new FormControl('', { nonNullable: true }),
     salaryMin: new FormControl<number | null>(null, [Validators.min(0)]),
     salaryMax: new FormControl<number | null>(null, [Validators.min(0)]),
@@ -475,6 +494,8 @@ export class JobSearchPage implements OnInit {
         const query = this.queryFromParams(params);
         this.currentQuery = query;
         this.filterForm.patchValue({
+          sort: query.sort ?? 'posted_at',
+          sortDir: query.sortDir ?? 'desc',
           organization: query.organization ?? '',
           salaryMin: query.salary_min ?? null,
           salaryMax: query.salary_max ?? null,
@@ -489,11 +510,11 @@ export class JobSearchPage implements OnInit {
       return;
     }
 
-    const { organization, salaryMin, salaryMax } = this.filterForm.getRawValue();
+    const { organization, salaryMin, salaryMax, sort, sortDir } = this.filterForm.getRawValue();
     const query: JobListQuery = {
       limit: this.currentQuery.limit,
-      sort: this.currentQuery.sort,
-      sortDir: this.currentQuery.sortDir,
+      sort,
+      sortDir,
     };
     const normalizedOrganization = organization.trim();
     if (normalizedOrganization) {

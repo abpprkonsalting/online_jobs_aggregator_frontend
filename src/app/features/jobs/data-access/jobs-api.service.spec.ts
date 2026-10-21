@@ -67,7 +67,7 @@ describe('JobsApiService', () => {
     service.list({
       limit: 25,
       offset: 50,
-      sort: 'salary_min',
+      sort: 'organization',
       sortDir: 'asc',
       salary_min: 65000,
       salary_max: 120000,
@@ -86,7 +86,7 @@ describe('JobsApiService', () => {
     ]);
     expect(request.request.params.get('limit')).toBe('25');
     expect(request.request.params.get('offset')).toBe('50');
-    expect(request.request.params.get('sort')).toBe('salary_min');
+    expect(request.request.params.get('sort')).toBe('organization');
     expect(request.request.params.get('sortDir')).toBe('asc');
     expect(request.request.params.get('salary_min')).toBe('65000');
     expect(request.request.params.get('salary_max')).toBe('120000');

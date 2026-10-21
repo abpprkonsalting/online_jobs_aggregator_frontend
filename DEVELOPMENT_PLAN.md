@@ -116,7 +116,7 @@ Work items are intentionally small enough to review and commit independently. Us
 - [x] **F1.7 — Synchronize search state with the URL.** Serialize applied filters, sort, and page/offset into route query parameters and restore them on navigation or reload.
   **Accept when:** a copied URL restores the same supported search state and browser back/forward works.  
   **Commit scope:** `feat(frontend): persist job search in URL`
-- [ ] **F1.8 — Add sorting controls.** Expose only backend-supported sort keys and directions and make the active order apparent.  
+- [x] **F1.8 — Add sorting controls.** Expose only backend-supported sort keys and directions and make the active order apparent.
   **Accept when:** selecting a sort option changes the request and the result order matches backend behavior.  
   **Commit scope:** `feat(frontend): add job result sorting`
 - [ ] **F1.9 — Add pagination.** Use the verified response metadata to page through results and reset pagination when search criteria change.  

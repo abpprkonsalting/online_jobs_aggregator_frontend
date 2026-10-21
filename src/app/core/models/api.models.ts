@@ -25,10 +25,7 @@ export interface JobListResponse {
 export type JobSortField =
   | 'posted_at'
   | 'date_posted'
-  | 'title'
-  | 'organization'
-  | 'salary_min'
-  | 'salary_max';
+  | 'organization';
 
 export type SortDirection = 'asc' | 'desc';
 

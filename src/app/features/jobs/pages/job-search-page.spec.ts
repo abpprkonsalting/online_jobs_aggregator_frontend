@@ -111,7 +111,8 @@ describe('JobSearchPage', () => {
     pageHarness.detectChanges();
 
     const request = httpTesting.expectOne((req) => req.url === '/api/jobs');
-    expect(TestBed.inject(Router).url).toBe('/jobs?organization=Example%20Co&salary_min=80000&salary_max=125000');
+    expect(TestBed.inject(Router).url)
+      .toBe('/jobs?organization=Example%20Co&salary_min=80000&salary_max=125000&sort=posted_at&sortDir=desc');
     expect(request.request.params.get('organization')).toBe('Example Co');
     expect(request.request.params.get('salary_min')).toBe('80000');
     expect(request.request.params.get('salary_max')).toBe('125000');
@@ -140,6 +141,48 @@ describe('JobSearchPage', () => {
     httpTesting.expectNone((req) => req.url === '/api/jobs');
   });
 
+  it('applies verified sort options and sends the selected direction', async () => {
+    const pageHarness = await createPage();
+    httpTesting.expectOne('/api/jobs').flush(listResponse([]));
+    pageHarness.detectChanges();
+
+    const page = pageHarness.routeNativeElement as HTMLElement;
+    const sort = page.querySelector('#sort-by') as HTMLSelectElement;
+    const direction = page.querySelector('#sort-direction') as HTMLSelectElement;
+    expect([...sort.options].map((option) => option.value))
+      .toEqual(['posted_at', 'date_posted', 'organization']);
+
+    sort.value = 'organization';
+    sort.dispatchEvent(new Event('change', { bubbles: true }));
+    direction.value = 'asc';
+    direction.dispatchEvent(new Event('change', { bubbles: true }));
+    (page.querySelector('.apply-button') as HTMLButtonElement).click();
+    await pageHarness.fixture.whenStable();
+    pageHarness.detectChanges();
+
+    const request = httpTesting.expectOne((req) => req.url === '/api/jobs');
+    expect(request.request.params.get('sort')).toBe('organization');
+    expect(request.request.params.get('sortDir')).toBe('asc');
+    expect(TestBed.inject(Router).url).toContain('sort=organization&sortDir=asc');
+    request.flush(listResponse([
+      { ...job, id: 'job-a', organization: 'A Company' },
+      { ...job, id: 'job-b', organization: 'B Company' },
+    ]));
+    pageHarness.detectChanges();
+    expect([...page.querySelectorAll('article .job-meta li:first-child')].map((meta) => meta.textContent?.trim()))
+      .toEqual(['A Company', 'B Company']);
+  });
+
+  it('ignores unsupported sort fields restored from the URL', async () => {
+    const pageHarness = await createPage('/jobs?sort=salary_min&sortDir=asc');
+    const request = httpTesting.expectOne((req) => req.url === '/api/jobs');
+
+    expect(request.request.params.has('sort')).toBe(false);
+    expect((pageHarness.routeNativeElement?.querySelector('#sort-by') as HTMLSelectElement).value)
+      .toBe('posted_at');
+    request.flush(listResponse([]));
+  });
+
   it('shows an API error and retries the request when requested', async () => {
     const pageHarness = await createPage();
     httpTesting.expectOne('/api/jobs').flush(
@@ -162,7 +205,7 @@ describe('JobSearchPage', () => {
 
   it('restores filters, pagination, and sort from route query parameters', async () => {
     const pageHarness = await createPage(
-      '/jobs?organization=Example%20Co&salary_min=80000&limit=10&offset=20&sort=title&sortDir=asc',
+      '/jobs?organization=Example%20Co&salary_min=80000&limit=10&offset=20&sort=organization&sortDir=asc',
     );
     const request = httpTesting.expectOne((req) => req.url === '/api/jobs');
 
@@ -170,12 +213,16 @@ describe('JobSearchPage', () => {
     expect(request.request.params.get('salary_min')).toBe('80000');
     expect(request.request.params.get('limit')).toBe('10');
     expect(request.request.params.get('offset')).toBe('20');
-    expect(request.request.params.get('sort')).toBe('title');
+    expect(request.request.params.get('sort')).toBe('organization');
     expect(request.request.params.get('sortDir')).toBe('asc');
     expect((pageHarness.routeNativeElement?.querySelector('#organization') as HTMLInputElement).value)
       .toBe('Example Co');
     expect((pageHarness.routeNativeElement?.querySelector('#salary-min') as HTMLInputElement).value)
       .toBe('80000');
+    expect((pageHarness.routeNativeElement?.querySelector('#sort-by') as HTMLSelectElement).value)
+      .toBe('organization');
+    expect((pageHarness.routeNativeElement?.querySelector('#sort-direction') as HTMLSelectElement).value)
+      .toBe('asc');
     request.flush(listResponse([]));
   });
 
