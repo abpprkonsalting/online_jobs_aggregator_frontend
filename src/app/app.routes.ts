@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { JobDetailPage } from './features/jobs/pages/job-detail-page';
 import { JobSearchPage } from './features/jobs/pages/job-search-page';
+import { SignInPage } from './features/auth/pages/sign-in-page';
 import { NotFoundPage } from './pages/not-found-page';
 import { PlaceholderPage } from './pages/placeholder-page';
 
@@ -24,11 +25,7 @@ export const routes: Routes = [
   },
   {
     path: 'sign-in',
-    component: PlaceholderPage,
-    data: {
-      title: 'Welcome back',
-      description: 'Sign-in and account features will be available in a future update.',
-    },
+    component: SignInPage,
   },
   { path: '**', component: NotFoundPage },
 ];

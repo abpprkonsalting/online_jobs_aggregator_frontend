@@ -136,7 +136,7 @@ Work items are intentionally small enough to review and commit independently. Us
 - [x] **F2.2 — Add in-memory session state.** Store the access token and current user in application memory, expose signed-in state, and attach the access token to protected requests.
   **Accept when:** protected calls include the expected Authorization header and the refresh token is never read by frontend code.  
   **Commit scope:** `feat(frontend): manage authenticated session`
-- [ ] **F2.3 — Build the sign-in page.** Add email/password inputs, client-side validation, submission feedback, and clear invalid-credential/error messages.  
+- [x] **F2.3 — Build the sign-in page.** Add email/password inputs, client-side validation, submission feedback, and clear invalid-credential/error messages.
   **Accept when:** valid credentials establish a session and invalid credentials leave the user unauthenticated with an accessible error.  
   **Commit scope:** `feat(frontend): add sign-in page`
 - [ ] **F2.4 — Restore and refresh sessions.** On app startup, use the refresh cookie to obtain a new access token and then load the current identity; handle expired/revoked sessions cleanly.  
