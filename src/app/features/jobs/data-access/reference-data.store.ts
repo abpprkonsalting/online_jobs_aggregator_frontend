@@ -1,14 +1,11 @@
 import { inject, Injectable, signal, WritableSignal } from '@angular/core';
 import { Observable } from 'rxjs';
+import { AsyncState } from '../../../core/models/async-state';
 import { ApiError } from '../../../core/http/api-error';
 import { Category, City, Country, Skill, Source } from '../../../core/models/api.models';
 import { ReferenceDataApiService } from './reference-data-api.service';
 
-export type ResourceState<T> =
-  | { status: 'idle' }
-  | { status: 'loading' }
-  | { status: 'loaded'; value: T }
-  | { status: 'error'; error: ApiError };
+export type ResourceState<T> = AsyncState<T>;
 
 @Injectable({ providedIn: 'root' })
 export class ReferenceDataStore {

@@ -1,7 +1,13 @@
-import { Component } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
+import { JobResultCard } from '../components/job-result-card';
+import { ApiError } from '../../../core/http/api-error';
+import { AsyncState } from '../../../core/models/async-state';
+import { JobListResponse } from '../../../core/models/api.models';
+import { JobsApiService } from '../data-access/jobs-api.service';
 
 @Component({
   selector: 'app-job-search-page',
+  imports: [JobResultCard],
   template: `
     <section class="search-page" aria-labelledby="page-title">
       <header class="page-header">
@@ -30,17 +36,51 @@ import { Component } from '@angular/core';
         </aside>
 
         <section class="results-panel" aria-labelledby="results-title">
+          @let currentState = state();
           <div class="panel-heading results-heading">
             <div>
               <p class="eyebrow">Opportunities</p>
               <h2 id="results-title">Search results</h2>
             </div>
+            @if (currentState.status === 'loaded') {
+              <span class="result-count">
+                {{ currentState.value.total }}
+                {{ currentState.value.total === 1 ? 'role' : 'roles' }}
+              </span>
+            }
           </div>
-          <div class="empty-results" role="status">
-            <span class="empty-icon" aria-hidden="true">↗</span>
-            <h3>Your results will appear here</h3>
-            <p>Job listings are being connected. Check back soon to explore available roles.</p>
-          </div>
+          @switch (currentState.status) {
+            @case ('loading') {
+              <div class="empty-results" role="status" aria-live="polite">
+                <span class="loading-indicator" aria-hidden="true"></span>
+                <h3>Loading jobs</h3>
+                <p>We’re gathering the latest opportunities.</p>
+              </div>
+            }
+            @case ('error') {
+              <div class="empty-results" role="alert">
+                <span class="empty-icon error-icon" aria-hidden="true">!</span>
+                <h3>We couldn’t load jobs</h3>
+                <p>{{ currentState.error.message }}</p>
+                <button type="button" class="retry-button" (click)="loadJobs()">Try again</button>
+              </div>
+            }
+            @case ('loaded') {
+              @if (currentState.value.jobs.length === 0) {
+                <div class="empty-results" role="status">
+                  <span class="empty-icon" aria-hidden="true">↗</span>
+                  <h3>No jobs found</h3>
+                  <p>There are no matching jobs right now. Please check back later.</p>
+                </div>
+              } @else {
+                <div class="job-list" aria-label="Job results">
+                  @for (job of currentState.value.jobs; track job.id) {
+                    <app-job-result-card [job]="job" />
+                  }
+                </div>
+              }
+            }
+          }
         </section>
       </div>
     </section>
@@ -175,6 +215,19 @@ import { Component } from '@angular/core';
       font-size: 1.2rem;
     }
 
+    .result-count {
+      color: var(--color-muted);
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .job-list {
+      display: grid;
+      min-width: 0;
+      gap: 0.75rem;
+      padding: 1rem;
+    }
+
     .empty-results {
       display: flex;
       min-height: 17rem;
@@ -211,6 +264,49 @@ import { Component } from '@angular/core';
       line-height: 1.6;
     }
 
+    .loading-indicator {
+      width: 2rem;
+      aspect-ratio: 1;
+      margin-bottom: 1rem;
+      border: 3px solid var(--color-border);
+      border-top-color: var(--color-accent);
+      border-radius: 50%;
+      animation: spin 800ms linear infinite;
+    }
+
+    .error-icon {
+      background: #fff0ec;
+      color: #a43d25;
+      font-weight: 800;
+    }
+
+    .retry-button {
+      min-height: 2.75rem;
+      margin-top: 1.25rem;
+      padding: 0.6rem 1rem;
+      border: 0;
+      border-radius: 0.6rem;
+      background: var(--color-ink);
+      color: #fff;
+      cursor: pointer;
+      font-weight: 650;
+    }
+
+    .retry-button:hover {
+      background: var(--color-accent-dark);
+    }
+
+    .retry-button:focus-visible {
+      outline: 3px solid var(--color-accent);
+      outline-offset: 3px;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
     @media (max-width: 760px) {
       .search-layout {
         grid-template-columns: minmax(0, 1fr);
@@ -232,6 +328,27 @@ import { Component } from '@angular/core';
         padding: 1.25rem;
       }
     }
+
+    @media (prefers-reduced-motion: reduce) {
+      .loading-indicator {
+        animation-duration: 2s;
+      }
+    }
   `,
 })
-export class JobSearchPage {}
+export class JobSearchPage implements OnInit {
+  private readonly jobsApi = inject(JobsApiService);
+  protected readonly state = signal<AsyncState<JobListResponse>>({ status: 'loading' });
+
+  ngOnInit(): void {
+    this.loadJobs();
+  }
+
+  protected loadJobs(): void {
+    this.state.set({ status: 'loading' });
+    this.jobsApi.list().subscribe({
+      next: (value) => this.state.set({ status: 'loaded', value }),
+      error: (error: ApiError) => this.state.set({ status: 'error', error }),
+    });
+  }
+}

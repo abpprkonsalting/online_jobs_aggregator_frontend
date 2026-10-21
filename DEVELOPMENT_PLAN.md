@@ -107,7 +107,7 @@ Work items are intentionally small enough to review and commit independently. Us
 - [x] **F1.4 — Render job result cards.** Show available title, organization, location, remote, salary, and posted-date information; gracefully omit missing fields.
   **Accept when:** representative complete and partial job records render without errors.  
   **Commit scope:** `feat(frontend): render job result cards`
-- [ ] **F1.5 — Add loading, empty, and failure states.** Provide visible loading feedback, a no-results state, and an actionable retry state for failed list requests.  
+- [x] **F1.5 — Add loading, empty, and failure states.** Provide visible loading feedback, a no-results state, and an actionable retry state for failed list requests.
   **Accept when:** component tests cover success, empty, loading, and API failure states.  
   **Commit scope:** `feat(frontend): handle job search states`
 - [ ] **F1.6 — Add confirmed filters.** Implement filter controls for fields verified to work end-to-end. Keep unverified filters hidden or clearly unavailable until backend support is confirmed.  
