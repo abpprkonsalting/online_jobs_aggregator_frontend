@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import {
   AbstractControl,
   FormControl,
@@ -8,11 +8,30 @@ import {
   ValidatorFn,
   Validators,
 } from '@angular/forms';
+import { ActivatedRoute, ParamMap, Params, Router } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { JobResultCard } from '../components/job-result-card';
 import { ApiError } from '../../../core/http/api-error';
 import { AsyncState } from '../../../core/models/async-state';
-import { JobListQuery, JobListResponse } from '../../../core/models/api.models';
+import {
+  JobListQuery,
+  JobListResponse,
+  JobSortField,
+} from '../../../core/models/api.models';
 import { JobsApiService } from '../data-access/jobs-api.service';
+
+const JOB_SORT_FIELDS: ReadonlySet<string> = new Set([
+  'posted_at',
+  'date_posted',
+  'title',
+  'organization',
+  'salary_min',
+  'salary_max',
+]);
+
+function isJobSortField(value: string | null): value is JobSortField {
+  return value !== null && JOB_SORT_FIELDS.has(value);
+}
 
 const salaryRangeValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
   const minimum = control.get('salaryMin')?.value;
@@ -438,6 +457,9 @@ const salaryRangeValidator: ValidatorFn = (control: AbstractControl): Validation
 })
 export class JobSearchPage implements OnInit {
   private readonly jobsApi = inject(JobsApiService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
   protected readonly state = signal<AsyncState<JobListResponse>>({ status: 'loading' });
   protected readonly filterForm = new FormGroup({
     organization: new FormControl('', { nonNullable: true }),
@@ -447,7 +469,18 @@ export class JobSearchPage implements OnInit {
   private currentQuery: JobListQuery = {};
 
   ngOnInit(): void {
-    this.loadJobs();
+    this.route.queryParamMap
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((params) => {
+        const query = this.queryFromParams(params);
+        this.currentQuery = query;
+        this.filterForm.patchValue({
+          organization: query.organization ?? '',
+          salaryMin: query.salary_min ?? null,
+          salaryMax: query.salary_max ?? null,
+        });
+        this.loadJobs(query);
+      });
   }
 
   protected applyFilters(): void {
@@ -457,7 +490,11 @@ export class JobSearchPage implements OnInit {
     }
 
     const { organization, salaryMin, salaryMax } = this.filterForm.getRawValue();
-    const query: JobListQuery = {};
+    const query: JobListQuery = {
+      limit: this.currentQuery.limit,
+      sort: this.currentQuery.sort,
+      sortDir: this.currentQuery.sortDir,
+    };
     const normalizedOrganization = organization.trim();
     if (normalizedOrganization) {
       query.organization = normalizedOrganization;
@@ -469,7 +506,10 @@ export class JobSearchPage implements OnInit {
       query.salary_max = salaryMax;
     }
 
-    this.loadJobs(query);
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: this.toUrlParams(query),
+    });
   }
 
   protected clearFilters(): void {
@@ -484,5 +524,58 @@ export class JobSearchPage implements OnInit {
       next: (value) => this.state.set({ status: 'loaded', value }),
       error: (error: ApiError) => this.state.set({ status: 'error', error }),
     });
+  }
+
+  private queryFromParams(params: ParamMap): JobListQuery {
+    const query: JobListQuery = {};
+    const limit = this.integerParam(params.get('limit'), 1, 100);
+    const offset = this.integerParam(params.get('offset'), 0);
+    const salaryMinimum = this.numberParam(params.get('salary_min'));
+    const salaryMaximum = this.numberParam(params.get('salary_max'));
+    const organization = params.get('organization')?.trim();
+    const sort = params.get('sort');
+    const sortDir = params.get('sortDir');
+
+    if (limit !== undefined) query.limit = limit;
+    if (offset !== undefined) query.offset = offset;
+    if (salaryMinimum !== undefined) query.salary_min = salaryMinimum;
+    if (salaryMaximum !== undefined) query.salary_max = salaryMaximum;
+    if (organization) query.organization = organization;
+    if (isJobSortField(sort)) query.sort = sort;
+    if (sortDir === 'asc' || sortDir === 'desc') query.sortDir = sortDir;
+
+    return query;
+  }
+
+  private integerParam(value: string | null, minimum: number, maximum = Number.MAX_SAFE_INTEGER): number | undefined {
+    if (value === null || !/^\d+$/.test(value)) {
+      return undefined;
+    }
+
+    const parsed = Number(value);
+    return Number.isSafeInteger(parsed) && parsed >= minimum && parsed <= maximum
+      ? parsed
+      : undefined;
+  }
+
+  private numberParam(value: string | null): number | undefined {
+    if (value === null || value.trim() === '') {
+      return undefined;
+    }
+
+    const parsed = Number(value);
+    return Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined;
+  }
+
+  private toUrlParams(query: JobListQuery): Params {
+    return {
+      organization: query.organization ?? null,
+      salary_min: query.salary_min ?? null,
+      salary_max: query.salary_max ?? null,
+      limit: query.limit ?? null,
+      offset: query.offset ?? null,
+      sort: query.sort ?? null,
+      sortDir: query.sortDir ?? null,
+    };
   }
 }

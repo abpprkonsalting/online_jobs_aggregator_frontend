@@ -113,7 +113,7 @@ Work items are intentionally small enough to review and commit independently. Us
 - [x] **F1.6 — Add confirmed filters.** Implement filter controls for fields verified to work end-to-end. Keep unverified filters hidden or clearly unavailable until backend support is confirmed.
   **Accept when:** changing a filter updates the request and returned results reflect the selected value in a backend smoke test.  
   **Commit scope:** `feat(frontend): add verified job filters`
-- [ ] **F1.7 — Synchronize search state with the URL.** Serialize applied filters, sort, and page/offset into route query parameters and restore them on navigation or reload.  
+- [x] **F1.7 — Synchronize search state with the URL.** Serialize applied filters, sort, and page/offset into route query parameters and restore them on navigation or reload.
   **Accept when:** a copied URL restores the same supported search state and browser back/forward works.  
   **Commit scope:** `feat(frontend): persist job search in URL`
 - [ ] **F1.8 — Add sorting controls.** Expose only backend-supported sort keys and directions and make the active order apparent.  
