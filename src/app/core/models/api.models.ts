@@ -37,6 +37,9 @@ export interface JobListQuery {
   offset?: number;
   sort?: JobSortField;
   sortDir?: SortDirection;
+  salary_min?: number;
+  salary_max?: number;
+  organization?: string;
 }
 
 export interface JobSkill {

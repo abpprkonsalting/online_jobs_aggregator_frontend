@@ -63,20 +63,34 @@ describe('JobsApiService', () => {
     expect(actualResponse).toEqual(response);
   });
 
-  it('serializes supported pagination and sorting options', () => {
+  it('serializes supported pagination, sorting, and filter options', () => {
     service.list({
       limit: 25,
       offset: 50,
       sort: 'salary_min',
       sortDir: 'asc',
+      salary_min: 65000,
+      salary_max: 120000,
+      organization: 'Example Co',
     }).subscribe();
 
     const request = httpTesting.expectOne((req) => req.url === '/api/jobs');
-    expect(request.request.params.keys()).toEqual(['limit', 'offset', 'sort', 'sortDir']);
+    expect(request.request.params.keys()).toEqual([
+      'limit',
+      'offset',
+      'sort',
+      'sortDir',
+      'salary_min',
+      'salary_max',
+      'organization',
+    ]);
     expect(request.request.params.get('limit')).toBe('25');
     expect(request.request.params.get('offset')).toBe('50');
     expect(request.request.params.get('sort')).toBe('salary_min');
     expect(request.request.params.get('sortDir')).toBe('asc');
+    expect(request.request.params.get('salary_min')).toBe('65000');
+    expect(request.request.params.get('salary_max')).toBe('120000');
+    expect(request.request.params.get('organization')).toBe('Example Co');
     request.flush({ jobs: [], total: 0, limit: 25, offset: 50, hasMore: false });
   });
 

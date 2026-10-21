@@ -87,6 +87,53 @@ describe('JobSearchPage', () => {
     expect(page.querySelector('app-job-result-card')).toBeNull();
   });
 
+  it('applies a trimmed organization and validated salary range', () => {
+    const fixture = createPage();
+    httpTesting.expectOne('/api/jobs').flush(listResponse([]));
+    fixture.detectChanges();
+
+    const page = fixture.nativeElement as HTMLElement;
+    const organization = page.querySelector('#organization') as HTMLInputElement;
+    const salaryMinimum = page.querySelector('#salary-min') as HTMLInputElement;
+    const salaryMaximum = page.querySelector('#salary-max') as HTMLInputElement;
+    organization.value = ' Example Co ';
+    organization.dispatchEvent(new Event('input', { bubbles: true }));
+    salaryMinimum.value = '80000';
+    salaryMinimum.dispatchEvent(new Event('input', { bubbles: true }));
+    salaryMaximum.value = '125000';
+    salaryMaximum.dispatchEvent(new Event('input', { bubbles: true }));
+    (page.querySelector('.apply-button') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    const request = httpTesting.expectOne((req) => req.url === '/api/jobs');
+    expect(request.request.params.get('organization')).toBe('Example Co');
+    expect(request.request.params.get('salary_min')).toBe('80000');
+    expect(request.request.params.get('salary_max')).toBe('125000');
+    request.flush(listResponse([job]));
+    fixture.detectChanges();
+    expect(page.querySelector('app-job-result-card h2')?.textContent).toContain('Frontend Engineer');
+  });
+
+  it('rejects an invalid salary range without sending a request', () => {
+    const fixture = createPage();
+    httpTesting.expectOne('/api/jobs').flush(listResponse([]));
+    fixture.detectChanges();
+
+    const page = fixture.nativeElement as HTMLElement;
+    const salaryMinimum = page.querySelector('#salary-min') as HTMLInputElement;
+    const salaryMaximum = page.querySelector('#salary-max') as HTMLInputElement;
+    salaryMinimum.value = '120000';
+    salaryMinimum.dispatchEvent(new Event('input', { bubbles: true }));
+    salaryMaximum.value = '80000';
+    salaryMaximum.dispatchEvent(new Event('input', { bubbles: true }));
+    (page.querySelector('.apply-button') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    expect(page.querySelector('[role="alert"]')?.textContent)
+      .toContain('Minimum salary must not exceed maximum salary');
+    httpTesting.expectNone((req) => req.url === '/api/jobs');
+  });
+
   it('shows an API error and retries the request when requested', () => {
     const fixture = createPage();
     httpTesting.expectOne('/api/jobs').flush(

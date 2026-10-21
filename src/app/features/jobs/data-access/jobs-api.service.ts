@@ -22,6 +22,15 @@ export class JobsApiService {
     if (query.sortDir !== undefined) {
       params = params.set('sortDir', query.sortDir);
     }
+    if (query.salary_min !== undefined) {
+      params = params.set('salary_min', query.salary_min);
+    }
+    if (query.salary_max !== undefined) {
+      params = params.set('salary_max', query.salary_max);
+    }
+    if (query.organization !== undefined) {
+      params = params.set('organization', query.organization);
+    }
 
     return this.api.get<JobListResponse>('/jobs', { params });
   }

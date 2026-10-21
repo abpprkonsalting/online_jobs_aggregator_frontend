@@ -1,13 +1,31 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
+import {
+  AbstractControl,
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+  ValidationErrors,
+  ValidatorFn,
+  Validators,
+} from '@angular/forms';
 import { JobResultCard } from '../components/job-result-card';
 import { ApiError } from '../../../core/http/api-error';
 import { AsyncState } from '../../../core/models/async-state';
-import { JobListResponse } from '../../../core/models/api.models';
+import { JobListQuery, JobListResponse } from '../../../core/models/api.models';
 import { JobsApiService } from '../data-access/jobs-api.service';
+
+const salaryRangeValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
+  const minimum = control.get('salaryMin')?.value;
+  const maximum = control.get('salaryMax')?.value;
+
+  return typeof minimum === 'number' && typeof maximum === 'number' && minimum > maximum
+    ? { salaryRange: true }
+    : null;
+};
 
 @Component({
   selector: 'app-job-search-page',
-  imports: [JobResultCard],
+  imports: [JobResultCard, ReactiveFormsModule],
   template: `
     <section class="search-page" aria-labelledby="page-title">
       <header class="page-header">
@@ -22,17 +40,53 @@ import { JobsApiService } from '../data-access/jobs-api.service';
         <aside class="filters-panel" aria-labelledby="filters-title">
           <div class="panel-heading">
             <h2 id="filters-title">Search filters</h2>
-            <span class="coming-soon">Coming soon</span>
           </div>
           <p class="filters-description">
-            Narrow your search by category, location, skills, and work arrangement.
+            Filter by organization and salary. More options will be added as backend support is verified.
           </p>
-          <ul class="filter-preview" aria-label="Planned filters">
-            <li>Category</li>
-            <li>Location</li>
-            <li>Skills</li>
-            <li>Work arrangement</li>
-          </ul>
+          <form [formGroup]="filterForm" (ngSubmit)="applyFilters()">
+            <label for="organization">Organization</label>
+            <input
+              id="organization"
+              type="search"
+              formControlName="organization"
+              autocomplete="organization"
+              placeholder="Company name"
+            />
+
+            <div class="salary-fields">
+              <div>
+                <label for="salary-min">Minimum salary</label>
+                <input
+                  id="salary-min"
+                  type="number"
+                  min="0"
+                  step="any"
+                  formControlName="salaryMin"
+                  inputmode="decimal"
+                  placeholder="Any"
+                />
+              </div>
+              <div>
+                <label for="salary-max">Maximum salary</label>
+                <input
+                  id="salary-max"
+                  type="number"
+                  min="0"
+                  step="any"
+                  formControlName="salaryMax"
+                  inputmode="decimal"
+                  placeholder="Any"
+                />
+              </div>
+            </div>
+            @if (filterForm.hasError('salaryRange')) {
+              <p class="validation-message" role="alert">Minimum salary must not exceed maximum salary.</p>
+            }
+
+            <button type="submit" class="apply-button">Apply filters</button>
+            <button type="button" class="clear-button" (click)="clearFilters()">Clear filters</button>
+          </form>
         </aside>
 
         <section class="results-panel" aria-labelledby="results-title">
@@ -162,15 +216,7 @@ import { JobsApiService } from '../data-access/jobs-api.service';
       letter-spacing: -0.025em;
     }
 
-    .coming-soon {
-      flex: 0 0 auto;
-      padding: 0.3rem 0.5rem;
-      border-radius: 999px;
-      background: var(--color-subtle);
-      color: var(--color-muted);
-      font-size: 0.7rem;
-      font-weight: 650;
-    }
+
 
     .filters-description {
       margin: 0.8rem 0 1rem;
@@ -179,21 +225,78 @@ import { JobsApiService } from '../data-access/jobs-api.service';
       line-height: 1.55;
     }
 
-    .filter-preview {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.45rem;
-      margin: 0;
-      padding: 0;
-      list-style: none;
+    form {
+      display: grid;
+      gap: 0.65rem;
     }
 
-    .filter-preview li {
-      padding: 0.35rem 0.55rem;
+    label {
+      color: var(--color-ink);
+      font-size: 0.8rem;
+      font-weight: 650;
+    }
+
+    input {
+      width: 100%;
+      min-width: 0;
+      min-height: 2.65rem;
+      padding: 0.55rem 0.65rem;
       border: 1px solid var(--color-border);
-      border-radius: 999px;
+      border-radius: 0.55rem;
+      background: var(--color-surface);
+      color: var(--color-ink);
+      font-size: 0.875rem;
+    }
+
+    input:focus-visible {
+      outline: 3px solid rgb(216 102 54 / 25%);
+      border-color: var(--color-accent);
+    }
+
+    .salary-fields {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.55rem;
+      margin-top: 0.35rem;
+    }
+
+    .salary-fields > div {
+      display: grid;
+      min-width: 0;
+      gap: 0.45rem;
+    }
+
+    .validation-message {
+      margin: 0;
+      color: #a43d25;
+      font-size: 0.8rem;
+      line-height: 1.45;
+    }
+
+    .apply-button,
+    .clear-button {
+      min-height: 2.65rem;
+      border-radius: 0.55rem;
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 650;
+    }
+
+    .apply-button {
+      margin-top: 0.35rem;
+      border: 0;
+      background: var(--color-ink);
+      color: #fff;
+    }
+
+    .apply-button:hover {
+      background: var(--color-accent-dark);
+    }
+
+    .clear-button {
+      border: 1px solid var(--color-border);
+      background: transparent;
       color: var(--color-muted);
-      font-size: 0.75rem;
     }
 
     .results-panel {
@@ -312,9 +415,6 @@ import { JobsApiService } from '../data-access/jobs-api.service';
         grid-template-columns: minmax(0, 1fr);
       }
 
-      .filter-preview {
-        gap: 0.4rem;
-      }
     }
 
     @media (max-width: 420px) {
@@ -339,14 +439,48 @@ import { JobsApiService } from '../data-access/jobs-api.service';
 export class JobSearchPage implements OnInit {
   private readonly jobsApi = inject(JobsApiService);
   protected readonly state = signal<AsyncState<JobListResponse>>({ status: 'loading' });
+  protected readonly filterForm = new FormGroup({
+    organization: new FormControl('', { nonNullable: true }),
+    salaryMin: new FormControl<number | null>(null, [Validators.min(0)]),
+    salaryMax: new FormControl<number | null>(null, [Validators.min(0)]),
+  }, { validators: salaryRangeValidator });
+  private currentQuery: JobListQuery = {};
 
   ngOnInit(): void {
     this.loadJobs();
   }
 
-  protected loadJobs(): void {
+  protected applyFilters(): void {
+    if (this.filterForm.invalid) {
+      this.filterForm.markAllAsTouched();
+      return;
+    }
+
+    const { organization, salaryMin, salaryMax } = this.filterForm.getRawValue();
+    const query: JobListQuery = {};
+    const normalizedOrganization = organization.trim();
+    if (normalizedOrganization) {
+      query.organization = normalizedOrganization;
+    }
+    if (salaryMin !== null) {
+      query.salary_min = salaryMin;
+    }
+    if (salaryMax !== null) {
+      query.salary_max = salaryMax;
+    }
+
+    this.loadJobs(query);
+  }
+
+  protected clearFilters(): void {
+    this.filterForm.reset({ organization: '', salaryMin: null, salaryMax: null });
+    this.applyFilters();
+  }
+
+  protected loadJobs(query: JobListQuery = this.currentQuery): void {
+    this.currentQuery = query;
     this.state.set({ status: 'loading' });
-    this.jobsApi.list().subscribe({
+    this.jobsApi.list(query).subscribe({
       next: (value) => this.state.set({ status: 'loaded', value }),
       error: (error: ApiError) => this.state.set({ status: 'error', error }),
     });

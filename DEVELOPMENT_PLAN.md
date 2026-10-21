@@ -110,7 +110,7 @@ Work items are intentionally small enough to review and commit independently. Us
 - [x] **F1.5 — Add loading, empty, and failure states.** Provide visible loading feedback, a no-results state, and an actionable retry state for failed list requests.
   **Accept when:** component tests cover success, empty, loading, and API failure states.  
   **Commit scope:** `feat(frontend): handle job search states`
-- [ ] **F1.6 — Add confirmed filters.** Implement filter controls for fields verified to work end-to-end. Keep unverified filters hidden or clearly unavailable until backend support is confirmed.  
+- [x] **F1.6 — Add confirmed filters.** Implement filter controls for fields verified to work end-to-end. Keep unverified filters hidden or clearly unavailable until backend support is confirmed.
   **Accept when:** changing a filter updates the request and returned results reflect the selected value in a backend smoke test.  
   **Commit scope:** `feat(frontend): add verified job filters`
 - [ ] **F1.7 — Synchronize search state with the URL.** Serialize applied filters, sort, and page/offset into route query parameters and restore them on navigation or reload.  
