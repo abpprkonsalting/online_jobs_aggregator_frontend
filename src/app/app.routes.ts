@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { JobSearchPage } from './features/jobs/pages/job-search-page';
 import { NotFoundPage } from './pages/not-found-page';
 import { PlaceholderPage } from './pages/placeholder-page';
 
@@ -6,11 +7,7 @@ export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'jobs' },
   {
     path: 'jobs',
-    component: PlaceholderPage,
-    data: {
-      title: 'Find your next opportunity',
-      description: 'Job discovery is coming soon. Check back as we build out the search experience.',
-    },
+    component: JobSearchPage,
   },
   {
     path: 'categories',

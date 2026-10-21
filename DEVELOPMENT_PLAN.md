@@ -101,7 +101,7 @@ Work items are intentionally small enough to review and commit independently. Us
 - [x] **F1.2 — Load filter reference data.** Add typed services and loading states for categories, skills, cities, countries, and sources only where their read endpoints are confirmed.
   **Accept when:** reference data loads independently and failures do not block the job list.  
   **Commit scope:** `feat(frontend): load job filter reference data`
-- [ ] **F1.3 — Build the job-search page layout.** Add the job-search route, page heading, results region, and responsive space for filters.  
+- [x] **F1.3 — Build the job-search page layout.** Add the job-search route, page heading, results region, and responsive space for filters.
   **Accept when:** the page works with a mocked or empty result set and has no horizontal overflow on mobile.  
   **Commit scope:** `feat(frontend): add job search page`
 - [ ] **F1.4 — Render job result cards.** Show available title, organization, location, remote, salary, and posted-date information; gracefully omit missing fields.  
