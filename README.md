@@ -1,71 +1,62 @@
 # Online Jobs Aggregator
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.2.3.
+Angular frontend for browsing aggregated job listings and managing user interests and administrator data.
 
-## Development server
+## Prerequisites
 
-To start a local development server, run:
+- Node.js `^22.22.3`, `^24.15.0`, or `>=26.0.0` (supported by the installed Angular CLI).
+- npm `11.16.0` (the version declared by `package.json`).
+- The backend API and its configured MySQL database. See the backend [environment example](../backend/.env.example) and [setup notes](../backend/README.txt). The development proxy expects the API at `http://127.0.0.1:3000`.
 
-```bash
-ng serve
-```
+## Local development
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
-
-API requests use the `/api` base URL in both development and production. During local development, the Angular server forwards `/api/**` requests to `http://127.0.0.1:3000` using [proxy.conf.json](./proxy.conf.json). For production, configure the web server or deployment platform to route `/api` to the backend on the same origin.
-
-Feature services should use the shared `ApiClient` from `src/app/core/http/api-client.ts`. HTTP failures are normalized to `ApiError` values, including network, validation, authentication, authorization, and server failures. Set `withCredentials: true` only for requests that need browser-managed cookies.
-
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+Install frontend dependencies:
 
 ```bash
-ng generate component component-name
+cd frontend
+npm ci
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+Start the backend API in a separate terminal:
 
 ```bash
-ng generate --help
+cd backend
+npm ci
+# Configure the backend .env and MySQL connection before starting.
+npm run api
 ```
 
-## Building
+The API server initializes the database and seeds the configured administrator on startup. It is separate from the fetch daemon. Existing jobs can be browsed with the API alone; to run the configured background fetcher, start it in another terminal with `npm run dev` from `backend`.
 
-To build the project run:
+Start the frontend:
 
 ```bash
-ng build
+cd frontend
+npm start
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+Open <http://127.0.0.1:4200>. The Angular development server proxies `/api/**` to `http://127.0.0.1:3000` using [proxy.conf.json](./proxy.conf.json), so browser requests remain same-origin during development. The API base path is `/api` in both environment files.
 
-## Linting
+## Quality checks
 
-To lint TypeScript and Angular templates, run:
+Run these commands from `frontend`:
 
 ```bash
 npm run lint
+npm test -- --watch=false
+npm run build
 ```
 
-## Running unit tests
+The test command runs the Vitest suite once. The production build is written to `dist/online-jobs-aggregator/browser/`.
 
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+## Production deployment
 
-```bash
-ng test
-```
+Publish the contents of `dist/online-jobs-aggregator/browser/` to a static web server or hosting platform. Configure the server to:
 
-## Running end-to-end tests
+1. Serve the Angular `index.html` for application routes such as `/jobs/:id`, `/account`, and `/admin/**` (history-API fallback).
+2. Forward `/api/**` to the backend API without rewriting the API paths or dropping response headers such as `Set-Cookie`.
+3. Keep the frontend and API same-origin where possible; the frontend uses the relative `/api` base path and does not set a production API hostname at runtime.
 
-For end-to-end (e2e) testing, run:
+Authentication uses an httpOnly refresh-token cookie and an in-memory access token. The backend must parse the refresh cookie and use cookie settings compatible with the deployed origin and HTTPS configuration. The current backend implementation still needs refresh-cookie parsing support before persistent session restoration can be relied upon. If deploying the frontend and API on different origins, configure explicit credentialed CORS and compatible cookie `SameSite`/`Secure` settings on the backend; the current backend does not provide that cross-origin configuration.
 
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+Successful sign-in, interest changes, and administrator actions should be smoke-tested with an authorized test account in the target environment. The live development smoke test confirmed public browsing and route protection, but did not have valid account credentials for those signed-in workflows.

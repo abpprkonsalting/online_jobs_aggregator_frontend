@@ -226,8 +226,8 @@ Work items are intentionally small enough to review and commit independently. Us
   **Accept when:** the primary flows can be completed by keyboard and remain usable at supported viewport sizes.
   **Review:** verified visible keyboard focus, associated labels on search/sign-in controls, and no horizontal overflow at 390px; strengthened control focus outlines and updated the brand-mark colors to meet contrast.
   **Commit scope:** `fix(frontend): address accessibility and responsive issues`
-- [ ] **F4.8 — Document setup and deployment.** Document prerequisites, local startup, backend URL/proxy configuration, test/build commands, and production artifact/deployment assumptions.  
-  **Accept when:** a new developer can run the app and produce its production build using only the documented steps.  
+- [x] **F4.8 — Document setup and deployment.** Document prerequisites, local startup, backend URL/proxy configuration, test/build commands, and production artifact/deployment assumptions.
+  **Accept when:** a new developer can run the app and produce its production build using only the documented steps.
   **Commit scope:** `docs(frontend): document setup and deployment`
 
 **Phase exit criteria:** quality checks pass and the implemented primary flows have been smoke-tested, reviewed for accessibility/responsiveness, and documented.
