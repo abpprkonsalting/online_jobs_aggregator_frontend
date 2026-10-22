@@ -166,7 +166,7 @@ Work items are intentionally small enough to review and commit independently. Us
 - [x] **F3.1 — Add administrator route protection.** Add an admin-role guard and admin navigation that is shown only for an authenticated admin.
   **Accept when:** non-admin users cannot enter admin routes through the UI and backend authorization remains authoritative.  
   **Commit scope:** `feat(frontend): protect administrator routes`
-- [ ] **F3.2 — Add admin API services and contracts.** Implement typed calls for user, source, geographic-area, source-area, and fetch-run endpoints that have verified response shapes.  
+- [x] **F3.2 — Add admin API services and contracts.** Implement typed calls for user, source, geographic-area, source-area, and fetch-run endpoints with shapes verified against the API handlers and repository queries.
   **Accept when:** service tests cover request paths, payloads, and permission/error responses.  
   **Commit scope:** `feat(frontend): add administrator API services`
 - [ ] **F3.3 — Build user list and creation.** Show users and provide a validated create-user form.  
