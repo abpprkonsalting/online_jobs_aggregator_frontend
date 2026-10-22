@@ -196,8 +196,8 @@ Work items are intentionally small enough to review and commit independently. Us
 - [x] **F3.11 — Display fetch-run history.** Show verified status, timing, counts, warnings, and errors. The current endpoint returns all runs and does not support a source filter.
   **Accept when:** an operator can distinguish running, successful, and failed runs from API data.  
   **Commit scope:** `feat(frontend): show fetch run history`
-- [ ] **F3.12 — Add master-data administration.** Provide the supported category, skill, city, country, keyword, and category-keyword tools, limiting actions to endpoints that exist.  
-  **Accept when:** each implemented action has validation and its result is confirmed by refreshing the corresponding data.  
+- [x] **F3.12 — Add master-data administration.** Provide the supported category, skill, city, country, keyword, and category-keyword tools, limiting actions to endpoints that exist.
+  **Accept when:** create/seed actions validate inputs and confirm their results by refreshing catalogues; category-keyword links are confirmed by the API response because no list endpoint exists.
   **Commit scope:** `feat(frontend): manage supported master data`
 
 **Phase exit criteria:** an administrator can complete each implemented user, source, area, assignment, fetch, and master-data workflow; authorization is still enforced by the backend.

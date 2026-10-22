@@ -23,6 +23,7 @@ import { AdminUser } from '../models/admin.models';
         <a routerLink="/admin/geographic-areas">Geographic areas</a>
         <a routerLink="/admin/assignments">Assignments</a>
         <a routerLink="/admin/fetch-runs">Fetch history</a>
+        <a routerLink="/admin/master-data">Master data</a>
       </nav>
 
       <section class="admin-panel" aria-labelledby="create-user-title">
