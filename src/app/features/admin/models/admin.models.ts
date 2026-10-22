@@ -31,6 +31,11 @@ export interface AdminMutationResponse {
   success: boolean;
 }
 
+export interface GeographicAreaDefinition {
+  bbox: [number, number, number, number];
+  zoom: number;
+}
+
 export interface AdminSource {
   id: string;
   name: string;
@@ -62,7 +67,7 @@ export interface UpdateAdminSourceRequest {
 export interface AdminGeographicArea {
   id: string;
   name: string;
-  definition: Record<string, unknown>;
+  definition: GeographicAreaDefinition;
   enabled: number;
   created_at: string;
   updated_at: string;
@@ -70,13 +75,14 @@ export interface AdminGeographicArea {
 
 export interface CreateAdminGeographicAreaRequest {
   name: string;
-  definition: Record<string, unknown>;
+  definition: GeographicAreaDefinition;
   enabled?: boolean;
 }
 
 export interface UpdateAdminGeographicAreaRequest {
   name?: string;
-  definition?: Record<string, unknown>;
+  definition?: GeographicAreaDefinition;
+  enabled?: boolean;
 }
 
 export interface AdminSourceArea {
@@ -84,7 +90,7 @@ export interface AdminSourceArea {
   source_name: string;
   geographic_area_id: string;
   area_name: string;
-  area_definition: Record<string, unknown>;
+  area_definition: GeographicAreaDefinition;
   enabled: number;
   last_run_at: string | null;
   next_run_at: string | null;

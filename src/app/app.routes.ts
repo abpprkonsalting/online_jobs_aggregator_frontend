@@ -9,6 +9,7 @@ import { CategoryInterestsPage } from './features/auth/pages/category-interests-
 import { adminGuard } from './features/auth/guards/admin.guard';
 import { AdminUsersPage } from './features/admin/pages/admin-users-page';
 import { AdminSourcesPage } from './features/admin/pages/admin-sources-page';
+import { AdminGeographicAreasPage } from './features/admin/pages/admin-geographic-areas-page';
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'jobs' },
@@ -35,6 +36,11 @@ export const routes: Routes = [
     path: 'admin/sources',
     canActivate: [adminGuard],
     component: AdminSourcesPage,
+  },
+  {
+    path: 'admin/geographic-areas',
+    canActivate: [adminGuard],
+    component: AdminGeographicAreasPage,
   },
   {
     path: 'categories',

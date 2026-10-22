@@ -20,6 +20,7 @@ import { AdminUser } from '../models/admin.models';
       <nav class="admin-navigation" aria-label="Administrator sections">
         <a routerLink="/admin" aria-current="page">Users</a>
         <a routerLink="/admin/sources">Sources</a>
+        <a routerLink="/admin/geographic-areas">Geographic areas</a>
       </nav>
 
       <section class="admin-panel" aria-labelledby="create-user-title">

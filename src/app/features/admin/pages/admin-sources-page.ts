@@ -25,6 +25,7 @@ function isConfigObject(value: unknown): value is Record<string, unknown> {
       <nav class="admin-navigation" aria-label="Administrator sections">
         <a routerLink="/admin">Users</a>
         <a routerLink="/admin/sources" aria-current="page">Sources</a>
+        <a routerLink="/admin/geographic-areas">Geographic areas</a>
       </nav>
 
       <section class="admin-panel" aria-labelledby="source-form-title">

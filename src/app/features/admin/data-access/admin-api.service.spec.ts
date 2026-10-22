@@ -6,6 +6,7 @@ import { ApiClient } from '../../../core/http/api-client';
 import { ApiError } from '../../../core/http/api-error';
 import { apiErrorInterceptor } from '../../../core/http/api-error.interceptor';
 import { AdminApiService } from './admin-api.service';
+import { GeographicAreaDefinition } from '../models/admin.models';
 
 describe('AdminApiService', () => {
   let service: AdminApiService;
@@ -101,7 +102,8 @@ describe('AdminApiService', () => {
     service.listGeographicAreas().subscribe();
     httpTesting.expectOne('/api/admin/geographic-areas').flush([]);
 
-    const definition = { bbox: [-71.2, 42.1, -70.9, 42.5], zoom: 9 };
+    const bbox: [number, number, number, number] = [-71.2, 42.1, -70.9, 42.5];
+    const definition: GeographicAreaDefinition = { bbox, zoom: 9 };
     const createBody = { name: 'Boston', definition, enabled: true };
     service.createGeographicArea(createBody).subscribe();
     const create = httpTesting.expectOne('/api/admin/geographic-areas');
