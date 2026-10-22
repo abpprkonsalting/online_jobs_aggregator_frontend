@@ -1,0 +1,48 @@
+name: Deploy Frontend
+
+on:
+  push:
+    branches: [master]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run lint
+        run: npm run lint
+
+      - name: Run tests
+        run: npm test -- --watch=false
+
+      - name: Build production bundle
+        run: npm run build
+
+      - name: Deploy to VPS
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_SSH_PORT: ${{ secrets.VPS_SSH_PORT }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_SSH_KNOWN_HOSTS: ${{ secrets.VPS_SSH_KNOWN_HOSTS }}
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$VPS_SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+          eval "$(ssh-agent -s)"
+          printf '%s\n' "$SSH_KEY" | tr -d '\r' | ssh-add -
+          rsync -avz -e "ssh -p $VPS_SSH_PORT -o StrictHostKeyChecking=yes" \
+            dist/online-jobs-aggregator/browser/ "$VPS_USER@$VPS_HOST:/var/www/map_rezi/frontend/"
+          ssh -p "$VPS_SSH_PORT" -o StrictHostKeyChecking=yes "$VPS_USER@$VPS_HOST" \
+            "sudo systemctl reload apache2"
