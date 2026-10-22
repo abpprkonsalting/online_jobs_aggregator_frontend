@@ -52,6 +52,7 @@ const integerZoomValidator: ValidatorFn = (control: AbstractControl): Validation
         <a routerLink="/admin">Users</a>
         <a routerLink="/admin/sources">Sources</a>
         <a routerLink="/admin/geographic-areas" aria-current="page">Geographic areas</a>
+        <a routerLink="/admin/assignments">Assignments</a>
       </nav>
 
       <section class="admin-panel" aria-labelledby="area-form-title">

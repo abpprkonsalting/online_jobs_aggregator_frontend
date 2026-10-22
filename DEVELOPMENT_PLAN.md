@@ -187,7 +187,7 @@ Work items are intentionally small enough to review and commit independently. Us
 - [x] **F3.8 — Add geographic-area deletion.** Add deletion confirmation and update state only after API success.
   **Accept when:** cancellation makes no request and failed deletion preserves the area in the list.  
   **Commit scope:** `feat(frontend): delete geographic areas`
-- [ ] **F3.9 — Manage source-area assignments.** Display existing links and support linking/unlinking source-area pairs.  
+- [x] **F3.9 — Manage source-area assignments.** Display existing links and support linking/unlinking source-area pairs, prevent duplicate links in the form, and show API errors without optimistic list changes.
   **Accept when:** successful changes are reflected and duplicate/invalid assignment errors are visible.  
   **Commit scope:** `feat(frontend): manage source area assignments`
 - [ ] **F3.10 — Trigger fetches.** Provide supported source/area selection and submit the trigger request with accepted/result feedback.  
