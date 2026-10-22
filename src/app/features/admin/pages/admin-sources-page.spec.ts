@@ -3,6 +3,7 @@ import { provideHttpClientTesting, HttpTestingController } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
+import { vi } from 'vitest';
 import { API_BASE_URL } from '../../../core/http/api-base-url';
 import { ApiClient } from '../../../core/http/api-client';
 import { apiErrorInterceptor } from '../../../core/http/api-error.interceptor';
@@ -53,6 +54,7 @@ describe('AdminSourcesPage', () => {
   });
 
   afterEach(() => httpTesting.verify());
+  afterEach(() => vi.restoreAllMocks());
 
   async function openPage() {
     harness = await RouterTestingHarness.create('/admin/sources');
@@ -194,5 +196,55 @@ describe('AdminSourcesPage', () => {
     const page = pageHarness.routeNativeElement as HTMLElement;
     expect(page.querySelector('[role="alert"]')?.textContent).toContain('Source name already exists');
     expect(page.querySelector('tbody')?.textContent).toContain('Example source');
+  });
+
+  it('does not send a delete request when source deletion is cancelled', async () => {
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    const pageHarness = await openPage();
+    httpTesting.expectOne('/api/admin/sources').flush([source]);
+    pageHarness.detectChanges();
+    ((pageHarness.routeNativeElement as HTMLElement).querySelector('.delete-source') as HTMLButtonElement).click();
+
+    expect(confirm).toHaveBeenCalledWith('Delete Example source? This action cannot be undone.');
+    expect((pageHarness.routeNativeElement as HTMLElement).querySelector('tbody')?.textContent)
+      .toContain('Example source');
+    httpTesting.expectNone('/api/admin/sources/source-1');
+  });
+
+  it('removes a source from the list only after the API confirms deletion', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    const pageHarness = await openPage();
+    httpTesting.expectOne('/api/admin/sources').flush([source]);
+    pageHarness.detectChanges();
+    ((pageHarness.routeNativeElement as HTMLElement).querySelector('.delete-source') as HTMLButtonElement).click();
+
+    const remove = httpTesting.expectOne('/api/admin/sources/source-1');
+    expect(remove.request.method).toBe('DELETE');
+    remove.flush({ success: true });
+    pageHarness.detectChanges();
+
+    const page = pageHarness.routeNativeElement as HTMLElement;
+    expect(page.querySelector('tbody')).toBeNull();
+    expect(page.textContent).toContain('No sources configured.');
+    expect(page.querySelector('[role="status"]')?.textContent).toContain('Deleted Example source.');
+  });
+
+  it('preserves the source and reports a failure when deletion is rejected', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    const pageHarness = await openPage();
+    httpTesting.expectOne('/api/admin/sources').flush([source]);
+    pageHarness.detectChanges();
+    ((pageHarness.routeNativeElement as HTMLElement).querySelector('.delete-source') as HTMLButtonElement).click();
+
+    httpTesting.expectOne('/api/admin/sources/source-1').flush(
+      { error: 'Source is still assigned to an area' },
+      { status: 409, statusText: 'Conflict' },
+    );
+    pageHarness.detectChanges();
+
+    const page = pageHarness.routeNativeElement as HTMLElement;
+    expect(page.querySelector('[role="alert"]')?.textContent).toContain('Source is still assigned to an area');
+    expect(page.querySelector('tbody')?.textContent).toContain('Example source');
+    expect(page.querySelector('[role="status"]')).toBeNull();
   });
 });

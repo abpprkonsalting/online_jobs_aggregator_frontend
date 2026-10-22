@@ -132,14 +132,24 @@ function isConfigObject(value: unknown): value is Record<string, unknown> {
                         <td>{{ source.enabled ? 'Enabled' : 'Disabled' }}</td>
                         <td>{{ source.last_run_at ?? 'Never' }}</td>
                         <td>
-                          <button
-                            type="button"
-                            class="secondary-button edit-source"
-                            [disabled]="saving()"
-                            (click)="beginEdit(source)"
-                          >
-                            Edit
-                          </button>
+                          <div class="row-actions">
+                            <button
+                              type="button"
+                              class="secondary-button edit-source"
+                              [disabled]="saving()"
+                              (click)="beginEdit(source)"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              type="button"
+                              class="secondary-button delete-source"
+                              [disabled]="saving()"
+                              (click)="deleteSource(source)"
+                            >
+                              Delete
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     }
@@ -278,6 +288,11 @@ function isConfigObject(value: unknown): value is Record<string, unknown> {
       display: flex;
       align-items: center;
       gap: 0.65rem;
+    }
+
+    .row-actions {
+      display: flex;
+      gap: 0.5rem;
     }
 
     .section-heading {
@@ -465,6 +480,47 @@ export class AdminSourcesPage implements OnInit {
           error instanceof Error
             ? error.message
             : 'An unexpected error occurred while saving the source.',
+        );
+      },
+    });
+  }
+
+  protected deleteSource(source: AdminSource): void {
+    if (this.saving()) {
+      return;
+    }
+    if (!window.confirm(`Delete ${source.name}? This action cannot be undone.`)) {
+      return;
+    }
+
+    this.saving.set(true);
+    this.mutationError.set(null);
+    this.mutationMessage.set(null);
+    this.adminApi.deleteSource(source.id).subscribe({
+      next: (response) => {
+        this.saving.set(false);
+        if (!response.success) {
+          this.mutationError.set(`The server did not confirm deletion of ${source.name}.`);
+          return;
+        }
+        const current = this.sourcesState();
+        if (current.status === 'loaded') {
+          this.sourcesState.set({
+            status: 'loaded',
+            value: current.value.filter((item) => item.id !== source.id),
+          });
+        }
+        if (this.editingSource()?.id === source.id) {
+          this.cancelEdit();
+        }
+        this.mutationMessage.set(`Deleted ${source.name}.`);
+      },
+      error: (error: unknown) => {
+        this.saving.set(false);
+        this.mutationError.set(
+          error instanceof Error
+            ? error.message
+            : 'An unexpected error occurred while deleting the source.',
         );
       },
     });

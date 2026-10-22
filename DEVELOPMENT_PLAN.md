@@ -178,7 +178,7 @@ Work items are intentionally small enough to review and commit independently. Us
 - [x] **F3.5 — Build source list and source form.** List sources and add create/edit forms for name, type, configuration, enabled state, and supported working mode. The current API does not support changing a source’s type after creation, so the edit form keeps it immutable.
   **Accept when:** valid changes persist and unsupported/invalid values are reported.  
   **Commit scope:** `feat(frontend): manage job sources`
-- [ ] **F3.6 — Add source deletion.** Add a confirmation flow and handle backend constraints or failures.  
+- [x] **F3.6 — Add source deletion.** Add a confirmation flow and handle backend constraints or failures.
   **Accept when:** the source is removed from the UI only after confirmed API success.  
   **Commit scope:** `feat(frontend): delete job sources`
 - [ ] **F3.7 — Build geographic-area management.** List and create/edit areas with validated bounding-box coordinates and zoom.  
