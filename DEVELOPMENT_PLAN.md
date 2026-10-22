@@ -210,7 +210,7 @@ Work items are intentionally small enough to review and commit independently. Us
 - [x] **F4.2 — Test search state and components.** Cover filter/URL synchronization, sorting, pagination, job cards, detail rendering, and loading/empty/error states.
   **Accept when:** tests demonstrate expected user-visible behavior for representative and incomplete data.  
   **Commit scope:** `test(frontend): cover job discovery flows`
-- [ ] **F4.3 — Test authentication and interests.** Cover login/logout, refresh, expired sessions, route guards, and category-interest changes.  
+- [x] **F4.3 — Test authentication and interests.** Cover login/logout, refresh, expired sessions, route guards, and category-interest changes.
   **Accept when:** tests verify the refresh token is not exposed and signed-out/unauthorized states behave correctly.  
   **Commit scope:** `test(frontend): cover account flows`
 - [ ] **F4.4 — Test administrator workflows.** Cover role restrictions, mutation confirmations, server validation errors, and API failures.  

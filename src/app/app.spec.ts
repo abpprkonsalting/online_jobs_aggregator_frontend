@@ -176,6 +176,31 @@ describe('App', () => {
     expect(warning?.querySelector('a')?.getAttribute('href')).toBe('/sign-in');
   });
 
+  it('clears the session and returns to jobs after confirmed server logout', async () => {
+    setAuthenticatedUser({
+      id: 'user-1',
+      email: 'user@example.com',
+      role: 'user',
+    });
+    const fixture = TestBed.createComponent(App);
+    const router = TestBed.inject(Router);
+    await router.navigateByUrl('/categories');
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('.sign-out-button')!.click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const page = fixture.nativeElement as HTMLElement;
+    expect(logout).toHaveBeenCalledTimes(1);
+    expect(clearSession).toHaveBeenCalledTimes(1);
+    expect(router.url).toBe('/jobs');
+    expect(page.querySelector('.sign-out-button')).toBeNull();
+    expect(page.querySelector('.sign-in-link')).not.toBeNull();
+    expect(page.querySelector('[role="alert"]')).toBeNull();
+  });
+
   it('clears local state and returns to jobs when server logout fails', async () => {
     setAuthenticatedUser({
       id: 'user-1',
