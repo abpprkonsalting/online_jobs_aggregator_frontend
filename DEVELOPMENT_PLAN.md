@@ -48,7 +48,7 @@ Restrict administrator navigation and actions to users whose authenticated role 
 - Source management: list, create, edit, enable/disable, and delete sources; expose the documented `working_mode` choices (`passive`, `proactive`, `both`) when supported.
 - Geographic area management: list, create, edit, enable/disable, and delete areas with the documented bounding-box and zoom definition.
 - Source/area assignment: link and unlink sources and areas.
-- Fetch operations: trigger a fetch and show recent fetch runs, status, counts, warnings, and errors where returned by the API.
+- Fetch history: show recent fetch runs, status, counts, warnings, and errors where returned by the API.
 - Master-data tools: inspect and seed categories, skills, cities, and countries; manage keywords and category-keyword links where supported.
 - Confirm destructive actions and show the result or failure of each mutation.
 
@@ -190,13 +190,10 @@ Work items are intentionally small enough to review and commit independently. Us
 - [x] **F3.9 — Manage source-area assignments.** Display existing links and support linking/unlinking source-area pairs, prevent duplicate links in the form, and show API errors without optimistic list changes.
   **Accept when:** successful changes are reflected and duplicate/invalid assignment errors are visible.  
   **Commit scope:** `feat(frontend): manage source area assignments`
-- [ ] **F3.10 — Trigger fetches.** Provide supported source/area selection and submit the trigger request with accepted/result feedback.  
-  **Accept when:** the UI reports request acceptance distinctly from fetch completion.  
-  **Commit scope:** `feat(frontend): trigger fetch runs`
-- [x] **F3.11 — Display fetch-run history.** Show verified status, timing, counts, warnings, and errors. The current endpoint returns all runs and does not support a source filter.
+- [x] **F3.10 — Display fetch-run history.** Show verified status, timing, counts, warnings, and errors. The current endpoint returns all runs and does not support a source filter.
   **Accept when:** an operator can distinguish running, successful, and failed runs from API data.  
   **Commit scope:** `feat(frontend): show fetch run history`
-- [x] **F3.12 — Add master-data administration.** Provide the supported category, skill, city, country, keyword, and category-keyword tools, limiting actions to endpoints that exist.
+- [x] **F3.11 — Add master-data administration.** Provide the supported category, skill, city, country, keyword, and category-keyword tools, limiting actions to endpoints that exist.
   **Accept when:** create/seed actions validate inputs and confirm their results by refreshing catalogues; category-keyword links are confirmed by the API response because no list endpoint exists.
   **Commit scope:** `feat(frontend): manage supported master data`
 
@@ -245,7 +242,6 @@ Treat the README and API implementation as separate evidence and verify behavior
 - The auth login/refresh flow uses an httpOnly refresh cookie. Confirm CORS allows credentials and that the frontend and API cookie settings work in the intended deployment topology.
 - `/api/master` currently has category/keyword reads and creation/linking endpoints plus seed endpoints, but not a complete edit/delete workflow for these entities.
 - Signed-in `GET /api/jobs` requests are filtered to jobs assigned to any followed category; no followed categories and anonymous requests return the unfiltered catalogue. Category/skill/location query-parameter filters remain incomplete.
-- The backend README documents `POST /api/admin/trigger`, but the API router does not implement it. The orchestrator runs as a separate process, so frontend triggering remains blocked until a working backend trigger contract is provided.
 - Admin source/area/fetch-run routes exist, but confirm response shapes and permissions for each read route. The current fetch-runs list route does not visibly apply the documented `source_id` filter.
 - The backend work report identifies unfinished Rezi location/category enrichment and a PMTiles decoder verification item; these affect data quality more than frontend implementation, but should be tracked during end-to-end validation.
 - **F4.6 live smoke-test (2026-10-22):** the same-origin development proxy successfully fetched a jobs page (HTTP 200; 3,537 total jobs), a job detail (200), and categories, skills, cities, and countries (all 200). The browser rendered the jobs list and detail, displayed invalid-credential feedback after a sign-in attempt (401), and redirected signed-out account/admin routes to sign-in. Unauthenticated user/admin API requests returned 401 as expected; `POST /api/auth/refresh` also returned 401 because no refresh cookie was present. Successful sign-in, interest changes, and admin mutations remain unverified because no valid local test-account credentials were available; keep F4.6 open until those workflows can be exercised with an authorized account.
