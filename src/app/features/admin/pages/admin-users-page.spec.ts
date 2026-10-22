@@ -160,6 +160,33 @@ describe('AdminUsersPage', () => {
     expect(page.querySelector('tbody')?.textContent).toContain('existing@example.com');
   });
 
+  it('surfaces backend field validation errors without creating a user', async () => {
+    const pageHarness = await openPage();
+    httpTesting.expectOne('/api/users').flush(users);
+    pageHarness.detectChanges();
+
+    const page = pageHarness.routeNativeElement as HTMLElement;
+    const email = page.querySelector('#user-email') as HTMLInputElement;
+    email.value = 'new@example.com';
+    email.dispatchEvent(new Event('input', { bubbles: true }));
+    const password = page.querySelector('#user-password') as HTMLInputElement;
+    password.value = 'secret123';
+    password.dispatchEvent(new Event('input', { bubbles: true }));
+    (page.querySelector('form') as HTMLFormElement).dispatchEvent(
+      new Event('submit', { bubbles: true, cancelable: true }),
+    );
+
+    httpTesting.expectOne('/api/users').flush(
+      { errors: [{ msg: 'Password is too weak', path: 'password', location: 'body' }] },
+      { status: 400, statusText: 'Bad Request' },
+    );
+    pageHarness.detectChanges();
+
+    expect(page.querySelector('[role="alert"]')?.textContent).toContain('invalid fields');
+    expect(page.querySelector('[role="status"]')).toBeNull();
+    expect(page.querySelector('tbody')?.textContent).toContain('existing@example.com');
+  });
+
   it('changes a user role in the list only after the API confirms the update', async () => {
     const pageHarness = await openPage();
     httpTesting.expectOne('/api/users').flush(users);

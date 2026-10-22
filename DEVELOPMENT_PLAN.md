@@ -213,7 +213,7 @@ Work items are intentionally small enough to review and commit independently. Us
 - [x] **F4.3 — Test authentication and interests.** Cover login/logout, refresh, expired sessions, route guards, and category-interest changes.
   **Accept when:** tests verify the refresh token is not exposed and signed-out/unauthorized states behave correctly.  
   **Commit scope:** `test(frontend): cover account flows`
-- [ ] **F4.4 — Test administrator workflows.** Cover role restrictions, mutation confirmations, server validation errors, and API failures.  
+- [x] **F4.4 — Test administrator workflows.** Cover role restrictions, mutation confirmations, server validation errors, and API failures.
   **Accept when:** tests show non-admin access is blocked in the UI and failed mutations are never represented as successful.  
   **Commit scope:** `test(frontend): cover administrator flows`
 - [ ] **F4.5 — Run quality checks and production build.** Run the established lint, test, and production-build commands; resolve issues introduced by frontend work.  
