@@ -7,6 +7,7 @@ import { API_BASE_URL } from '../../../core/http/api-base-url';
 import { ApiClient } from '../../../core/http/api-client';
 import { apiErrorInterceptor } from '../../../core/http/api-error.interceptor';
 import { JobListItem, JobListResponse } from '../../../core/models/api.models';
+import { AuthSessionService } from '../../auth/data-access/auth-session.service';
 import { JobSearchPage } from './job-search-page';
 
 const job: JobListItem = {
@@ -67,6 +68,28 @@ describe('JobSearchPage', () => {
 
     expect(pageHarness.routeNativeElement?.querySelector('[role="status"]')?.textContent)
       .toContain('Loading jobs');
+    httpTesting.expectOne('/api/jobs').flush(listResponse([]));
+  });
+
+  it('explains followed-category matching to signed-in users', async () => {
+    TestBed.inject(AuthSessionService).setSession('access-token', {
+      id: 'user-1',
+      email: 'user@example.com',
+      role: 'user',
+    });
+    const pageHarness = await createPage();
+    const page = pageHarness.routeNativeElement as HTMLElement;
+
+    expect(page.querySelector('.personalization-note')?.textContent)
+      .toContain('Jobs match any categories you follow');
+    expect(page.querySelector('.personalization-note')?.textContent)
+      .toContain('If you have no followed categories, all jobs are shown');
+    httpTesting.expectOne('/api/jobs').flush(listResponse([]));
+  });
+
+  it('does not show personalization messaging to signed-out users', async () => {
+    const pageHarness = await createPage();
+    expect(pageHarness.routeNativeElement?.querySelector('.personalization-note')).toBeNull();
     httpTesting.expectOne('/api/jobs').flush(listResponse([]));
   });
 

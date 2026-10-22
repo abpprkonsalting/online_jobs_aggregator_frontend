@@ -26,8 +26,9 @@ function protectedPath(url: string, apiBaseUrl: string): string | null {
   return requestPath.slice(base.length) || '/';
 }
 
-function requiresAuthentication(path: string): boolean {
-  return path === '/auth/me' || /^\/(users|admin|master)(?:\/|$)/.test(path);
+function acceptsAccessToken(path: string): boolean {
+  return path === '/auth/me'
+    || /^\/(jobs|users|admin|master)(?:\/|$)/.test(path);
 }
 
 export const authTokenInterceptor: HttpInterceptorFn = (request, next) => {
@@ -35,7 +36,7 @@ export const authTokenInterceptor: HttpInterceptorFn = (request, next) => {
   const accessToken = inject(AuthSessionService).getAccessToken();
   const path = protectedPath(request.url, apiBaseUrl);
 
-  if (accessToken === null || path === null || !requiresAuthentication(path)) {
+  if (accessToken === null || path === null || !acceptsAccessToken(path)) {
     return next(request);
   }
 

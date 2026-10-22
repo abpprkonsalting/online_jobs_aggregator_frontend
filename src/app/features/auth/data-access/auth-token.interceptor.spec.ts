@@ -57,7 +57,7 @@ describe('authTokenInterceptor', () => {
     request.flush({ id: 'user-1', email: 'user@example.com', role: 'user' });
   });
 
-  it('does not add the access token to public API requests', () => {
+  it('adds the access token to job requests for server-side category matching', () => {
     session.setSession('access-token', {
       id: 'user-1',
       email: 'user@example.com',
@@ -66,8 +66,21 @@ describe('authTokenInterceptor', () => {
     api.get('/jobs').subscribe();
 
     const request = httpTesting.expectOne('/api/jobs');
-    expect(request.request.headers.has('Authorization')).toBe(false);
+    expect(request.request.headers.get('Authorization')).toBe('Bearer access-token');
     request.flush({ jobs: [], total: 0, limit: 20, offset: 0, hasMore: false });
+  });
+
+  it('does not add the access token to public API requests', () => {
+    session.setSession('access-token', {
+      id: 'user-1',
+      email: 'user@example.com',
+      role: 'user',
+    });
+    api.get('/categories').subscribe();
+
+    const request = httpTesting.expectOne('/api/categories');
+    expect(request.request.headers.has('Authorization')).toBe(false);
+    request.flush([]);
   });
 
   it('does not send the access token to a third-party URL', () => {

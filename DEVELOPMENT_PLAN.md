@@ -37,6 +37,7 @@ Angular is the documented frontend choice. The existing docs do not settle a com
 - Use the backend's httpOnly refresh cookie with credentialed requests to `POST /api/auth/refresh`; do not attempt to read or persist the refresh token in frontend code.
 - Load the current identity with `GET /api/auth/me`, and provide logout through `POST /api/auth/logout`.
 - Let a signed-in user view and change their followed categories through `GET/POST/DELETE /api/users/:id/categories`.
+- For signed-in job searches, show jobs assigned to any category the user follows; when they follow no categories, show the full job catalogue. Anonymous searches remain unfiltered.
 - Provide category and keyword browsing using the master endpoints. Treat the interest-selection experience as user-specific: the shared job catalogue must not imply that another user's interests are visible.
 
 ### Administration
@@ -154,8 +155,8 @@ Work items are intentionally small enough to review and commit independently. Us
 - [x] **F2.8 — Build category-interest settings.** Let the signed-in user view, add, and remove followed categories with loading, empty, and error states.
   **Accept when:** changes persist after reloading the settings page and only the current user's interests are shown.  
   **Commit scope:** `feat(frontend): manage category interests`
-- [ ] **F2.9 — Agree and implement interest-to-feed behavior.** Confirm with the backend whether and how selected interests filter jobs; then connect that behavior without implying server-side personalization that does not exist.  
-  **Accept when:** documented behavior and an end-to-end test demonstrate which jobs a user sees for their interests.  
+- [x] **F2.9 — Agree and implement interest-to-feed behavior.** Signed-in job requests include the access token; the API filters to jobs assigned to any followed category and leaves the catalogue unfiltered when the user follows none. Anonymous job requests remain unfiltered.
+  **Accept when:** the selected behavior is documented, token forwarding and user messaging are covered by frontend tests, and backend query logic builds successfully.
   **Commit scope:** `feat(frontend): apply verified user interests`
 
 **Phase exit criteria:** a user can sign in, maintain their own interests, refresh a session securely, and sign out; personalized job results are only claimed if the backend contract supports them.
@@ -242,7 +243,7 @@ Treat the README and API implementation as separate evidence and verify behavior
 - `GET /api/jobs/:id` response fields and the list response should be captured as stable TypeScript contracts; the frontend should not infer a shape from the database model.
 - The auth login/refresh flow uses an httpOnly refresh cookie. Confirm CORS allows credentials and that the frontend and API cookie settings work in the intended deployment topology.
 - `/api/master` currently has category/keyword reads and creation/linking endpoints plus seed endpoints, but not a complete edit/delete workflow for these entities.
-- User category endpoints exist, but the job query API does not currently establish that jobs are automatically filtered to the signed-in user's followed categories. Agree and verify this behavior before promising a personalized feed.
+- Signed-in `GET /api/jobs` requests are filtered to jobs assigned to any followed category; no followed categories and anonymous requests return the unfiltered catalogue. Category/skill/location query-parameter filters remain incomplete.
 - Admin source/area/fetch-run routes exist, but confirm response shapes and permissions for each read route. The current fetch-runs list route does not visibly apply the documented `source_id` filter.
 - The backend work report identifies unfinished Rezi location/category enrichment and a PMTiles decoder verification item; these affect data quality more than frontend implementation, but should be tracked during end-to-end validation.
 

@@ -20,6 +20,7 @@ import {
   SortDirection,
 } from '../../../core/models/api.models';
 import { JobsApiService } from '../data-access/jobs-api.service';
+import { AuthSessionService } from '../../auth/data-access/auth-session.service';
 
 const JOB_SORT_FIELDS: ReadonlySet<string> = new Set([
   'posted_at',
@@ -51,6 +52,11 @@ const salaryRangeValidator: ValidatorFn = (control: AbstractControl): Validation
         <p class="page-description">
           Explore roles from across the web and find a position that fits your next move.
         </p>
+        @if (authSession.isAuthenticated()) {
+          <p class="page-description personalization-note">
+            Jobs match any categories you follow. If you have no followed categories, all jobs are shown.
+          </p>
+        }
       </header>
 
       <div class="search-layout">
@@ -507,6 +513,7 @@ const salaryRangeValidator: ValidatorFn = (control: AbstractControl): Validation
 })
 export class JobSearchPage implements OnInit {
   private readonly jobsApi = inject(JobsApiService);
+  protected readonly authSession = inject(AuthSessionService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
