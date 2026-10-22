@@ -10,6 +10,7 @@ import { JobsApiService } from './features/jobs/data-access/jobs-api.service';
 import { AuthSessionService } from './features/auth/data-access/auth-session.service';
 import { AuthApiService } from './features/auth/data-access/auth-api.service';
 import { AuthUser } from './features/auth/models/auth.models';
+import { AdminApiService } from './features/admin/data-access/admin-api.service';
 
 describe('App', () => {
   let setRestoreError: (error: ApiError | null) => void;
@@ -53,6 +54,10 @@ describe('App', () => {
         {
           provide: AuthApiService,
           useValue: { logout },
+        },
+        {
+          provide: AdminApiService,
+          useValue: { listUsers: () => of([]) },
         },
       ],
     }).compileComponents();
@@ -152,7 +157,7 @@ describe('App', () => {
 
     const page = fixture.nativeElement as HTMLElement;
     expect(router.url).toBe('/admin');
-    expect(page.querySelector('h1')?.textContent).toContain('Administrator tools');
+    expect(page.querySelector('h1')?.textContent).toContain('User management');
     expect(page.querySelector('.primary-navigation a[href="/admin"]')?.textContent?.trim())
       .toBe('Admin');
   });

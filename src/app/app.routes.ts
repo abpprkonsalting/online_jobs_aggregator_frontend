@@ -7,6 +7,7 @@ import { NotFoundPage } from './pages/not-found-page';
 import { PlaceholderPage } from './pages/placeholder-page';
 import { CategoryInterestsPage } from './features/auth/pages/category-interests-page';
 import { adminGuard } from './features/auth/guards/admin.guard';
+import { AdminUsersPage } from './features/admin/pages/admin-users-page';
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'jobs' },
@@ -26,11 +27,7 @@ export const routes: Routes = [
   {
     path: 'admin',
     canActivate: [adminGuard],
-    component: PlaceholderPage,
-    data: {
-      title: 'Administrator tools',
-      description: 'Administrator workflows will be available in a future update.',
-    },
+    component: AdminUsersPage,
   },
   {
     path: 'categories',

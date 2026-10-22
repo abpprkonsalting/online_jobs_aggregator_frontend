@@ -169,7 +169,7 @@ Work items are intentionally small enough to review and commit independently. Us
 - [x] **F3.2 — Add admin API services and contracts.** Implement typed calls for user, source, geographic-area, source-area, and fetch-run endpoints with shapes verified against the API handlers and repository queries.
   **Accept when:** service tests cover request paths, payloads, and permission/error responses.  
   **Commit scope:** `feat(frontend): add administrator API services`
-- [ ] **F3.3 — Build user list and creation.** Show users and provide a validated create-user form.  
+- [x] **F3.3 — Build user list and creation.** Show users and provide a validated create-user form.
   **Accept when:** successful creation refreshes the list and duplicate/validation failures are shown clearly.  
   **Commit scope:** `feat(frontend): list and create users`
 - [ ] **F3.4 — Add user role changes and deactivation.** Support role updates and account deactivation with confirmation for the destructive action.  
