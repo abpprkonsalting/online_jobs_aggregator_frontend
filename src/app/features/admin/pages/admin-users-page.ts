@@ -24,6 +24,12 @@ import { AdminUser } from '../models/admin.models';
         @if (successMessage(); as message) {
           <p class="success-message" role="status" aria-live="polite">{{ message }}</p>
         }
+        @if (mutationError(); as error) {
+          <p class="error-message" role="alert">{{ error }}</p>
+        }
+        @if (mutationMessage(); as message) {
+          <p class="success-message" role="status" aria-live="polite">{{ message }}</p>
+        }
         <form [formGroup]="userForm" (ngSubmit)="createUser()">
           <div class="form-grid">
             <div class="field">
@@ -92,6 +98,7 @@ import { AdminUser } from '../models/admin.models';
                       <th scope="col">Status</th>
                       <th scope="col">Last sign-in</th>
                       <th scope="col">Created</th>
+                      <th scope="col">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -102,6 +109,26 @@ import { AdminUser } from '../models/admin.models';
                         <td>{{ user.is_active ? 'Active' : 'Inactive' }}</td>
                         <td>{{ user.last_login_at ?? 'Never' }}</td>
                         <td>{{ user.created_at }}</td>
+                        <td>
+                          <div class="row-actions">
+                            <button
+                              type="button"
+                              class="secondary-button role-action"
+                              [disabled]="mutatingUserId() !== null"
+                              (click)="toggleUserRole(user)"
+                            >
+                              {{ user.role === 'admin' ? 'Set as user' : 'Make admin' }}
+                            </button>
+                            <button
+                              type="button"
+                              class="secondary-button deactivate-button"
+                              [disabled]="!user.is_active || mutatingUserId() !== null"
+                              (click)="deactivateUser(user)"
+                            >
+                              {{ mutatingUserId() === user.id ? 'Saving…' : 'Deactivate' }}
+                            </button>
+                          </div>
+                        </td>
                       </tr>
                     }
                   </tbody>
@@ -240,6 +267,11 @@ import { AdminUser } from '../models/admin.models';
       margin-bottom: 1rem;
     }
 
+    .row-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+
     .table-scroll {
       overflow-x: auto;
     }
@@ -285,6 +317,9 @@ export class AdminUsersPage implements OnInit {
   protected readonly creating = signal(false);
   protected readonly createError = signal<string | null>(null);
   protected readonly successMessage = signal<string | null>(null);
+  protected readonly mutationError = signal<string | null>(null);
+  protected readonly mutationMessage = signal<string | null>(null);
+  protected readonly mutatingUserId = signal<string | null>(null);
   protected readonly userForm = new FormGroup({
     email: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.email] }),
     password: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.minLength(6)] }),
@@ -330,6 +365,78 @@ export class AdminUsersPage implements OnInit {
             : 'An unexpected error occurred while creating the user.',
         );
       },
+    });
+  }
+
+  protected toggleUserRole(user: AdminUser): void {
+    if (this.mutatingUserId() !== null) {
+      return;
+    }
+
+    const role = user.role === 'admin' ? 'user' : 'admin';
+    this.startMutation(user.id);
+    this.adminApi.updateUserRole(user.id, role).subscribe({
+      next: (updatedUser) => {
+        this.updateUser(user.id, { role: updatedUser.role });
+        this.mutationMessage.set(`Updated ${user.email} to ${role === 'admin' ? 'administrator' : 'user'}.`);
+        this.finishMutation();
+      },
+      error: (error: unknown) => this.failMutation(error),
+    });
+  }
+
+  protected deactivateUser(user: AdminUser): void {
+    if (!user.is_active || this.mutatingUserId() !== null) {
+      return;
+    }
+    if (!window.confirm(`Deactivate ${user.email}? They will no longer be able to sign in.`)) {
+      return;
+    }
+
+    this.startMutation(user.id);
+    this.adminApi.deactivateUser(user.id).subscribe({
+      next: (response) => {
+        if (!response.success) {
+          this.mutationError.set(`The server did not confirm deactivation for ${user.email}.`);
+          this.finishMutation();
+          return;
+        }
+        this.updateUser(user.id, { is_active: 0 });
+        this.mutationMessage.set(`Deactivated ${user.email}.`);
+        this.finishMutation();
+      },
+      error: (error: unknown) => this.failMutation(error),
+    });
+  }
+
+  private startMutation(userId: string | null = null): void {
+    this.mutatingUserId.set(userId);
+    this.mutationError.set(null);
+    this.mutationMessage.set(null);
+  }
+
+  private finishMutation(): void {
+    this.mutatingUserId.set(null);
+  }
+
+  private failMutation(error: unknown): void {
+    this.mutationError.set(
+      error instanceof Error
+        ? error.message
+        : 'An unexpected error occurred while updating the user.',
+    );
+    this.finishMutation();
+  }
+
+  private updateUser(userId: string, update: Partial<AdminUser>): void {
+    const current = this.usersState();
+    if (current.status !== 'loaded') {
+      return;
+    }
+
+    this.usersState.set({
+      status: 'loaded',
+      value: current.value.map((user) => user.id === userId ? { ...user, ...update } : user),
     });
   }
 }

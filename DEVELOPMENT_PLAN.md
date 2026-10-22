@@ -172,7 +172,7 @@ Work items are intentionally small enough to review and commit independently. Us
 - [x] **F3.3 — Build user list and creation.** Show users and provide a validated create-user form.
   **Accept when:** successful creation refreshes the list and duplicate/validation failures are shown clearly.  
   **Commit scope:** `feat(frontend): list and create users`
-- [ ] **F3.4 — Add user role changes and deactivation.** Support role updates and account deactivation with confirmation for the destructive action.  
+- [x] **F3.4 — Add user role changes and deactivation.** Support role updates and account deactivation with confirmation for the destructive action.
   **Accept when:** each mutation updates the visible state and API failures do not appear as success.  
   **Commit scope:** `feat(frontend): manage user roles and status`
 - [ ] **F3.5 — Build source list and source form.** List sources and add create/edit forms for name, type, configuration, enabled state, and supported working mode.  

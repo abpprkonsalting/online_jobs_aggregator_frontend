@@ -3,6 +3,7 @@ import { provideHttpClientTesting, HttpTestingController } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
+import { vi } from 'vitest';
 import { API_BASE_URL } from '../../../core/http/api-base-url';
 import { ApiClient } from '../../../core/http/api-client';
 import { apiErrorInterceptor } from '../../../core/http/api-error.interceptor';
@@ -48,6 +49,7 @@ describe('AdminUsersPage', () => {
   });
 
   afterEach(() => httpTesting.verify());
+  afterEach(() => vi.restoreAllMocks());
 
   async function openPage() {
     harness = await RouterTestingHarness.create('/admin');
@@ -156,5 +158,95 @@ describe('AdminUsersPage', () => {
     expect(page.querySelector('[role="alert"]')?.textContent).toContain('User already exists');
     expect(page.querySelector('[role="status"]')).toBeNull();
     expect(page.querySelector('tbody')?.textContent).toContain('existing@example.com');
+  });
+
+  it('changes a user role in the list only after the API confirms the update', async () => {
+    const pageHarness = await openPage();
+    httpTesting.expectOne('/api/users').flush(users);
+    pageHarness.detectChanges();
+    ((pageHarness.routeNativeElement as HTMLElement).querySelector('.role-action') as HTMLButtonElement).click();
+
+    const update = httpTesting.expectOne('/api/users/user-1');
+    expect(update.request.method).toBe('PATCH');
+    expect(update.request.body).toEqual({ role: 'admin' });
+    update.flush({ id: 'user-1', role: 'admin' });
+    pageHarness.detectChanges();
+
+    const page = pageHarness.routeNativeElement as HTMLElement;
+    expect(page.querySelector('tbody')?.textContent).toContain('Administrator');
+    expect(page.querySelector('.role-action')?.textContent).toContain('Set as user');
+    expect(page.querySelector('[role="status"]')?.textContent).toContain('Updated existing@example.com');
+  });
+
+  it('keeps the old role and reports an error when a role update fails', async () => {
+    const pageHarness = await openPage();
+    httpTesting.expectOne('/api/users').flush(users);
+    pageHarness.detectChanges();
+    ((pageHarness.routeNativeElement as HTMLElement).querySelector('.role-action') as HTMLButtonElement).click();
+
+    httpTesting.expectOne('/api/users/user-1').flush(
+      { error: 'Admin role required' },
+      { status: 403, statusText: 'Forbidden' },
+    );
+    pageHarness.detectChanges();
+
+    const page = pageHarness.routeNativeElement as HTMLElement;
+    expect(page.querySelector('[role="alert"]')?.textContent).toContain('Admin role required');
+    expect(page.querySelector('[role="status"]')).toBeNull();
+    expect(page.querySelector('tbody')?.textContent).toContain('User');
+    expect(page.querySelector('.role-action')?.textContent).toContain('Make admin');
+  });
+
+  it('does not deactivate a user when confirmation is cancelled', async () => {
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    const pageHarness = await openPage();
+    httpTesting.expectOne('/api/users').flush(users);
+    pageHarness.detectChanges();
+    ((pageHarness.routeNativeElement as HTMLElement).querySelector('.deactivate-button') as HTMLButtonElement).click();
+    pageHarness.detectChanges();
+
+    expect(confirm).toHaveBeenCalledWith(
+      'Deactivate existing@example.com? They will no longer be able to sign in.',
+    );
+    expect((pageHarness.routeNativeElement as HTMLElement).querySelector('tbody')?.textContent)
+      .toContain('Active');
+    httpTesting.expectNone('/api/users/user-1');
+  });
+
+  it('deactivates a user only after API success', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    const pageHarness = await openPage();
+    httpTesting.expectOne('/api/users').flush(users);
+    pageHarness.detectChanges();
+
+    ((pageHarness.routeNativeElement as HTMLElement).querySelector('.deactivate-button') as HTMLButtonElement).click();
+    const deactivate = httpTesting.expectOne('/api/users/user-1');
+    expect(deactivate.request.method).toBe('DELETE');
+    deactivate.flush({ success: true });
+    pageHarness.detectChanges();
+    expect((pageHarness.routeNativeElement as HTMLElement).querySelector('tbody')?.textContent)
+      .toContain('Inactive');
+    expect((pageHarness.routeNativeElement as HTMLElement).querySelector('[role="status"]')?.textContent)
+      .toContain('Deactivated existing@example.com');
+  });
+
+  it('keeps a user active and reports an error when deactivation fails', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    const pageHarness = await openPage();
+    const otherUser = { ...users[0], id: 'user-2', email: 'other@example.com' };
+    httpTesting.expectOne('/api/users').flush([users[0], otherUser]);
+    pageHarness.detectChanges();
+    const buttons = (pageHarness.routeNativeElement as HTMLElement).querySelectorAll('.deactivate-button');
+    (buttons[1] as HTMLButtonElement).click();
+    httpTesting.expectOne('/api/users/user-2').flush(
+      { error: 'Unable to deactivate user' },
+      { status: 500, statusText: 'Internal Server Error' },
+    );
+    pageHarness.detectChanges();
+    const page = pageHarness.routeNativeElement as HTMLElement;
+    expect(page.querySelector('[role="alert"]')?.textContent).toContain('Unable to deactivate user');
+    expect(page.querySelector('[role="status"]')).toBeNull();
+    expect(page.querySelector('tbody')?.textContent).toContain('other@example.com');
+    expect(page.querySelector('tbody')?.textContent).toContain('Active');
   });
 });
