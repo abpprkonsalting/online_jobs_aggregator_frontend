@@ -22,6 +22,7 @@ import { AdminGeographicArea, AdminSource, AdminSourceArea } from '../models/adm
         <a routerLink="/admin/sources">Sources</a>
         <a routerLink="/admin/geographic-areas">Geographic areas</a>
         <a routerLink="/admin/assignments" aria-current="page">Assignments</a>
+        <a routerLink="/admin/fetch-runs">Fetch history</a>
       </nav>
 
       <section class="admin-panel" aria-labelledby="link-form-title">

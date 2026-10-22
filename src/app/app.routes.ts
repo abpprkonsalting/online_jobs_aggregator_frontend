@@ -11,6 +11,7 @@ import { AdminUsersPage } from './features/admin/pages/admin-users-page';
 import { AdminSourcesPage } from './features/admin/pages/admin-sources-page';
 import { AdminGeographicAreasPage } from './features/admin/pages/admin-geographic-areas-page';
 import { AdminSourceAreasPage } from './features/admin/pages/admin-source-areas-page';
+import { AdminFetchRunsPage } from './features/admin/pages/admin-fetch-runs-page';
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'jobs' },
@@ -47,6 +48,11 @@ export const routes: Routes = [
     path: 'admin/assignments',
     canActivate: [adminGuard],
     component: AdminSourceAreasPage,
+  },
+  {
+    path: 'admin/fetch-runs',
+    canActivate: [adminGuard],
+    component: AdminFetchRunsPage,
   },
   {
     path: 'categories',

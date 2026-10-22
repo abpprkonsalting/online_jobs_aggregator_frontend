@@ -193,7 +193,7 @@ Work items are intentionally small enough to review and commit independently. Us
 - [ ] **F3.10 — Trigger fetches.** Provide supported source/area selection and submit the trigger request with accepted/result feedback.  
   **Accept when:** the UI reports request acceptance distinctly from fetch completion.  
   **Commit scope:** `feat(frontend): trigger fetch runs`
-- [ ] **F3.11 — Display fetch-run history.** Show verified status, timing, counts, warnings, and errors; provide source filtering only if the backend supports it.  
+- [x] **F3.11 — Display fetch-run history.** Show verified status, timing, counts, warnings, and errors. The current endpoint returns all runs and does not support a source filter.
   **Accept when:** an operator can distinguish running, successful, and failed runs from API data.  
   **Commit scope:** `feat(frontend): show fetch run history`
 - [ ] **F3.12 — Add master-data administration.** Provide the supported category, skill, city, country, keyword, and category-keyword tools, limiting actions to endpoints that exist.  
@@ -244,6 +244,7 @@ Treat the README and API implementation as separate evidence and verify behavior
 - The auth login/refresh flow uses an httpOnly refresh cookie. Confirm CORS allows credentials and that the frontend and API cookie settings work in the intended deployment topology.
 - `/api/master` currently has category/keyword reads and creation/linking endpoints plus seed endpoints, but not a complete edit/delete workflow for these entities.
 - Signed-in `GET /api/jobs` requests are filtered to jobs assigned to any followed category; no followed categories and anonymous requests return the unfiltered catalogue. Category/skill/location query-parameter filters remain incomplete.
+- The backend README documents `POST /api/admin/trigger`, but the API router does not implement it. The orchestrator runs as a separate process, so frontend triggering remains blocked until a working backend trigger contract is provided.
 - Admin source/area/fetch-run routes exist, but confirm response shapes and permissions for each read route. The current fetch-runs list route does not visibly apply the documented `source_id` filter.
 - The backend work report identifies unfinished Rezi location/category enrichment and a PMTiles decoder verification item; these affect data quality more than frontend implementation, but should be tracked during end-to-end validation.
 
