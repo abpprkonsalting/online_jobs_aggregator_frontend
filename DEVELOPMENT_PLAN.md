@@ -204,7 +204,7 @@ Work items are intentionally small enough to review and commit independently. Us
 
 ### Phase 4 — Verification and release readiness
 
-- [ ] **F4.1 — Test API services.** Add focused tests for job, master-data, auth, interest, and admin API services, including query serialization and API errors.  
+- [x] **F4.1 — Test API services.** Add focused tests for job, master-data, auth, interest, and admin API services, including query serialization and API errors.
   **Accept when:** tests cover the key request/response contracts and pass consistently.  
   **Commit scope:** `test(frontend): cover API services`
 - [ ] **F4.2 — Test search state and components.** Cover filter/URL synchronization, sorting, pagination, job cards, detail rendering, and loading/empty/error states.  

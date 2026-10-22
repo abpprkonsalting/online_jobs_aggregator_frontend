@@ -3,6 +3,7 @@ import { provideHttpClientTesting, HttpTestingController } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { API_BASE_URL } from '../../../core/http/api-base-url';
 import { ApiClient } from '../../../core/http/api-client';
+import { ApiError } from '../../../core/http/api-error';
 import { apiErrorInterceptor } from '../../../core/http/api-error.interceptor';
 import { JobDetail, JobListResponse } from '../../../core/models/api.models';
 import { JobsApiService } from './jobs-api.service';
@@ -167,6 +168,25 @@ describe('JobsApiService', () => {
       categories: [],
       locations: [],
       days_waiting: null,
+    });
+  });
+
+  it('preserves not-found errors when a job detail is unavailable', () => {
+    let actualError: unknown;
+    service.getById('missing-job').subscribe({
+      error: (error: unknown) => (actualError = error),
+    });
+
+    httpTesting.expectOne('/api/jobs/missing-job').flush(
+      { error: 'Job not found' },
+      { status: 404, statusText: 'Not Found' },
+    );
+
+    expect(actualError).toBeInstanceOf(ApiError);
+    expect(actualError).toMatchObject({
+      kind: 'not-found',
+      status: 404,
+      message: 'Job not found',
     });
   });
 });
