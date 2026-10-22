@@ -222,8 +222,9 @@ Work items are intentionally small enough to review and commit independently. Us
 - [ ] **F4.6 — Smoke-test against the backend.** Exercise public browsing, detail views, sign-in, interests, and admin tasks against representative backend data. Record any backend blockers in the contract checks.  
   **Accept when:** each implemented primary workflow has an observed end-to-end result or a clearly recorded backend dependency.  
   **Commit scope:** `test(frontend): verify backend integration`
-- [ ] **F4.7 — Complete accessibility and responsive review.** Check keyboard navigation, labels, focus visibility, contrast, screen-reader announcements, and narrow/wide layouts; fix issues found.  
-  **Accept when:** the primary flows can be completed by keyboard and remain usable at supported viewport sizes.  
+- [x] **F4.7 — Complete accessibility and responsive review.** Check keyboard navigation, labels, focus visibility, contrast, screen-reader announcements, and narrow/wide layouts; fix issues found.
+  **Accept when:** the primary flows can be completed by keyboard and remain usable at supported viewport sizes.
+  **Review:** verified visible keyboard focus, associated labels on search/sign-in controls, and no horizontal overflow at 390px; strengthened control focus outlines and updated the brand-mark colors to meet contrast.
   **Commit scope:** `fix(frontend): address accessibility and responsive issues`
 - [ ] **F4.8 — Document setup and deployment.** Document prerequisites, local startup, backend URL/proxy configuration, test/build commands, and production artifact/deployment assumptions.  
   **Accept when:** a new developer can run the app and produce its production build using only the documented steps.  

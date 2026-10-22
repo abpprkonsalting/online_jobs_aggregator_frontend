@@ -309,16 +309,6 @@ const salaryRangeValidator: ValidatorFn = (control: AbstractControl): Validation
       font-size: 0.875rem;
     }
 
-    input:focus-visible {
-      outline: 3px solid rgb(216 102 54 / 25%);
-      border-color: var(--color-accent);
-    }
-
-    select:focus-visible {
-      outline: 3px solid rgb(216 102 54 / 25%);
-      border-color: var(--color-accent);
-    }
-
     .salary-fields {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));

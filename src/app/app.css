@@ -58,7 +58,7 @@
   aspect-ratio: 1;
   place-items: center;
   border-radius: 0.75rem;
-  background: var(--color-accent);
+  background: var(--color-accent-dark);
   color: #fff;
   font-size: 1rem;
   letter-spacing: -0.04em;

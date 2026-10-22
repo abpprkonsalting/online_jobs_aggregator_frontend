@@ -129,11 +129,6 @@ import { AuthSessionService } from '../data-access/auth-session.service';
       font: inherit;
     }
 
-    input:focus-visible {
-      outline: 3px solid rgb(216 102 54 / 25%);
-      border-color: var(--color-accent);
-    }
-
     input[aria-invalid="true"] {
       border-color: #a43d25;
     }
