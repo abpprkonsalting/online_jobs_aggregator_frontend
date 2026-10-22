@@ -184,7 +184,7 @@ Work items are intentionally small enough to review and commit independently. Us
 - [x] **F3.7 — Build geographic-area management.** List and create/edit areas with validated bounding-box coordinates and zoom, using the documented `bbox: [min_lon, min_lat, max_lon, max_lat]` and integer `zoom` definition.
   **Accept when:** invalid coordinates/zoom are rejected before submission and valid areas display their saved definition.  
   **Commit scope:** `feat(frontend): manage geographic areas`
-- [ ] **F3.8 — Add geographic-area deletion.** Add deletion confirmation and update state only after API success.  
+- [x] **F3.8 — Add geographic-area deletion.** Add deletion confirmation and update state only after API success.
   **Accept when:** cancellation makes no request and failed deletion preserves the area in the list.  
   **Commit scope:** `feat(frontend): delete geographic areas`
 - [ ] **F3.9 — Manage source-area assignments.** Display existing links and support linking/unlinking source-area pairs.  

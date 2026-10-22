@@ -173,14 +173,24 @@ const integerZoomValidator: ValidatorFn = (control: AbstractControl): Validation
                         <td>{{ area.definition.zoom }}</td>
                         <td>{{ area.enabled ? 'Enabled' : 'Disabled' }}</td>
                         <td>
-                          <button
-                            type="button"
-                            class="secondary-button edit-area"
-                            [disabled]="saving()"
-                            (click)="beginEdit(area)"
-                          >
-                            Edit
-                          </button>
+                          <div class="row-actions">
+                            <button
+                              type="button"
+                              class="secondary-button edit-area"
+                              [disabled]="saving()"
+                              (click)="beginEdit(area)"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              type="button"
+                              class="secondary-button delete-area"
+                              [disabled]="saving()"
+                              (click)="deleteArea(area)"
+                            >
+                              Delete
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     }
@@ -270,6 +280,7 @@ const integerZoomValidator: ValidatorFn = (control: AbstractControl): Validation
     .secondary-button { border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-ink); }
     .primary-button:disabled, .secondary-button:disabled { cursor: wait; opacity: 0.65; }
     .section-heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
+    .row-actions { display: flex; gap: 0.5rem; }
     .table-scroll { overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; text-align: left; }
     th, td { padding: 0.8rem 0.65rem; border-bottom: 1px solid var(--color-border); white-space: nowrap; }
@@ -386,6 +397,47 @@ export class AdminGeographicAreasPage implements OnInit {
           error instanceof Error
             ? error.message
             : 'An unexpected error occurred while saving the geographic area.',
+        );
+      },
+    });
+  }
+
+  protected deleteArea(area: AdminGeographicArea): void {
+    if (this.saving()) {
+      return;
+    }
+    if (!window.confirm(`Delete ${area.name}? This action cannot be undone.`)) {
+      return;
+    }
+
+    this.saving.set(true);
+    this.mutationError.set(null);
+    this.mutationMessage.set(null);
+    this.adminApi.deleteGeographicArea(area.id).subscribe({
+      next: (response) => {
+        this.saving.set(false);
+        if (!response.success) {
+          this.mutationError.set(`The server did not confirm deletion of ${area.name}.`);
+          return;
+        }
+        const current = this.areasState();
+        if (current.status === 'loaded') {
+          this.areasState.set({
+            status: 'loaded',
+            value: current.value.filter((item) => item.id !== area.id),
+          });
+        }
+        if (this.editingArea()?.id === area.id) {
+          this.cancelEdit();
+        }
+        this.mutationMessage.set(`Deleted ${area.name}.`);
+      },
+      error: (error: unknown) => {
+        this.saving.set(false);
+        this.mutationError.set(
+          error instanceof Error
+            ? error.message
+            : 'An unexpected error occurred while deleting the geographic area.',
         );
       },
     });

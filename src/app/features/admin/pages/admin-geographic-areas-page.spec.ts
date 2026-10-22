@@ -3,6 +3,7 @@ import { provideHttpClientTesting, HttpTestingController } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
+import { vi } from 'vitest';
 import { API_BASE_URL } from '../../../core/http/api-base-url';
 import { ApiClient } from '../../../core/http/api-client';
 import { apiErrorInterceptor } from '../../../core/http/api-error.interceptor';
@@ -52,6 +53,7 @@ describe('AdminGeographicAreasPage', () => {
   });
 
   afterEach(() => httpTesting.verify());
+  afterEach(() => vi.restoreAllMocks());
 
   async function openPage() {
     harness = await RouterTestingHarness.create('/admin/geographic-areas');
@@ -197,5 +199,53 @@ describe('AdminGeographicAreasPage', () => {
 
     expect(page.textContent).toContain('Zoom must be a non-negative whole number.');
     httpTesting.expectNone('/api/admin/geographic-areas');
+  });
+
+  it('does not request deletion when a geographic-area confirmation is cancelled', async () => {
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    const pageHarness = await openPage();
+    httpTesting.expectOne('/api/admin/geographic-areas').flush([area]);
+    pageHarness.detectChanges();
+    ((pageHarness.routeNativeElement as HTMLElement).querySelector('.delete-area') as HTMLButtonElement).click();
+
+    expect(confirm).toHaveBeenCalledWith('Delete Boston? This action cannot be undone.');
+    expect((pageHarness.routeNativeElement as HTMLElement).querySelector('tbody')?.textContent)
+      .toContain('Boston');
+    httpTesting.expectNone('/api/admin/geographic-areas/area-1');
+  });
+
+  it('removes an area only after successful deletion and preserves it after failure', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    const pageHarness = await openPage();
+    httpTesting.expectOne('/api/admin/geographic-areas').flush([area]);
+    pageHarness.detectChanges();
+    ((pageHarness.routeNativeElement as HTMLElement).querySelector('.delete-area') as HTMLButtonElement).click();
+    const remove = httpTesting.expectOne('/api/admin/geographic-areas/area-1');
+    expect(remove.request.method).toBe('DELETE');
+    remove.flush({ success: true });
+    pageHarness.detectChanges();
+
+    const page = pageHarness.routeNativeElement as HTMLElement;
+    expect(page.querySelector('tbody')).toBeNull();
+    expect(page.textContent).toContain('No geographic areas configured.');
+    expect(page.querySelector('[role="status"]')?.textContent).toContain('Deleted Boston.');
+  });
+
+  it('keeps an area listed and reports an error when deletion fails', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    const pageHarness = await openPage();
+    httpTesting.expectOne('/api/admin/geographic-areas').flush([area]);
+    pageHarness.detectChanges();
+    ((pageHarness.routeNativeElement as HTMLElement).querySelector('.delete-area') as HTMLButtonElement).click();
+    httpTesting.expectOne('/api/admin/geographic-areas/area-1').flush(
+      { error: 'Area is still in use' },
+      { status: 409, statusText: 'Conflict' },
+    );
+    pageHarness.detectChanges();
+
+    const page = pageHarness.routeNativeElement as HTMLElement;
+    expect(page.querySelector('[role="alert"]')?.textContent).toContain('Area is still in use');
+    expect(page.querySelector('tbody')?.textContent).toContain('Boston');
+    expect(page.querySelector('[role="status"]')).toBeNull();
   });
 });
