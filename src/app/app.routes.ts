@@ -8,6 +8,7 @@ import { PlaceholderPage } from './pages/placeholder-page';
 import { CategoryInterestsPage } from './features/auth/pages/category-interests-page';
 import { adminGuard } from './features/auth/guards/admin.guard';
 import { AdminUsersPage } from './features/admin/pages/admin-users-page';
+import { AdminSourcesPage } from './features/admin/pages/admin-sources-page';
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'jobs' },
@@ -26,8 +27,14 @@ export const routes: Routes = [
   },
   {
     path: 'admin',
+    pathMatch: 'full',
     canActivate: [adminGuard],
     component: AdminUsersPage,
+  },
+  {
+    path: 'admin/sources',
+    canActivate: [adminGuard],
+    component: AdminSourcesPage,
   },
   {
     path: 'categories',

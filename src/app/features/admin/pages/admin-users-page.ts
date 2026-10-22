@@ -1,5 +1,6 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { ApiError } from '../../../core/http/api-error';
 import { AsyncState } from '../../../core/models/async-state';
 import { AdminApiService } from '../data-access/admin-api.service';
@@ -7,7 +8,7 @@ import { AdminUser } from '../models/admin.models';
 
 @Component({
   selector: 'app-admin-users-page',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, RouterLink],
   template: `
     <section class="admin-page" aria-labelledby="page-title">
       <header class="page-header">
@@ -15,6 +16,11 @@ import { AdminUser } from '../models/admin.models';
         <h1 id="page-title">User management</h1>
         <p>Review user accounts and create new accounts for the application.</p>
       </header>
+
+      <nav class="admin-navigation" aria-label="Administrator sections">
+        <a routerLink="/admin" aria-current="page">Users</a>
+        <a routerLink="/admin/sources">Sources</a>
+      </nav>
 
       <section class="admin-panel" aria-labelledby="create-user-title">
         <h2 id="create-user-title">Create a user</h2>
@@ -187,6 +193,27 @@ import { AdminUser } from '../models/admin.models';
       border: 1px solid var(--color-border);
       border-radius: 0.9rem;
       background: var(--color-surface);
+    }
+
+    .admin-navigation {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .admin-navigation a {
+      padding: 0.55rem 0.8rem;
+      border-radius: 0.55rem;
+      background: var(--color-subtle);
+      color: var(--color-ink);
+      font-size: 0.9rem;
+      font-weight: 650;
+      text-decoration: none;
+    }
+
+    .admin-navigation a[aria-current='page'] {
+      background: var(--color-ink);
+      color: #fff;
     }
 
     h2 {
