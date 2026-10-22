@@ -216,8 +216,8 @@ Work items are intentionally small enough to review and commit independently. Us
 - [x] **F4.4 — Test administrator workflows.** Cover role restrictions, mutation confirmations, server validation errors, and API failures.
   **Accept when:** tests show non-admin access is blocked in the UI and failed mutations are never represented as successful.  
   **Commit scope:** `test(frontend): cover administrator flows`
-- [ ] **F4.5 — Run quality checks and production build.** Run the established lint, test, and production-build commands; resolve issues introduced by frontend work.  
-  **Accept when:** all required checks pass from a clean local run.  
+- [x] **F4.5 — Run quality checks and production build.** Run the established lint, test, and production-build commands; resolve issues introduced by frontend work.
+  **Accept when:** all required checks pass from a clean local run.
   **Commit scope:** `chore(frontend): pass production quality checks`
 - [ ] **F4.6 — Smoke-test against the backend.** Exercise public browsing, detail views, sign-in, interests, and admin tasks against representative backend data. Record any backend blockers in the contract checks.  
   **Accept when:** each implemented primary workflow has an observed end-to-end result or a clearly recorded backend dependency.  
