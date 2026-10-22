@@ -163,7 +163,7 @@ Work items are intentionally small enough to review and commit independently. Us
 
 ### Phase 3 — Administrator workflows
 
-- [ ] **F3.1 — Add administrator route protection.** Add an admin-role guard and admin navigation that is shown only for an authenticated admin.  
+- [x] **F3.1 — Add administrator route protection.** Add an admin-role guard and admin navigation that is shown only for an authenticated admin.
   **Accept when:** non-admin users cannot enter admin routes through the UI and backend authorization remains authoritative.  
   **Commit scope:** `feat(frontend): protect administrator routes`
 - [ ] **F3.2 — Add admin API services and contracts.** Implement typed calls for user, source, geographic-area, source-area, and fetch-run endpoints that have verified response shapes.  

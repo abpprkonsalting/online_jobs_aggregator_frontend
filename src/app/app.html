@@ -17,6 +17,11 @@
           <a routerLink="/account" routerLinkActive="active" ariaCurrentWhenActive="page">
             Account
           </a>
+          @if (authSession.currentUser()?.role === 'admin') {
+            <a routerLink="/admin" routerLinkActive="active" ariaCurrentWhenActive="page">
+              Admin
+            </a>
+          }
           <span class="account-email">{{ authSession.currentUser()?.email }}</span>
           <button
             type="button"

@@ -107,6 +107,56 @@ describe('App', () => {
     expect((fixture.nativeElement as HTMLElement).querySelector('#sign-in-title')).not.toBeNull();
   });
 
+  it('redirects signed-out visitors from admin routes and preserves their destination', async () => {
+    const fixture = TestBed.createComponent(App);
+    const router = TestBed.inject(Router);
+    await router.navigateByUrl('/admin?section=users');
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(router.url.startsWith('/sign-in')).toBe(true);
+    expect(router.parseUrl(router.url).queryParams['returnUrl']).toBe('/admin?section=users');
+    expect((fixture.nativeElement as HTMLElement).querySelector('#sign-in-title')).not.toBeNull();
+  });
+
+  it('redirects authenticated non-admin users away from admin routes', async () => {
+    setAuthenticatedUser({
+      id: 'user-1',
+      email: 'user@example.com',
+      role: 'user',
+    });
+    const fixture = TestBed.createComponent(App);
+    const router = TestBed.inject(Router);
+    await router.navigateByUrl('/admin');
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(router.url).toBe('/jobs');
+    expect((fixture.nativeElement as HTMLElement).querySelector('h1')?.textContent)
+      .toContain('Find your next opportunity');
+    expect((fixture.nativeElement as HTMLElement).querySelector('.primary-navigation a[href="/admin"]'))
+      .toBeNull();
+  });
+
+  it('allows admins to open admin routes and shows the admin navigation link', async () => {
+    setAuthenticatedUser({
+      id: 'admin-1',
+      email: 'admin@example.com',
+      role: 'admin',
+    });
+    const fixture = TestBed.createComponent(App);
+    const router = TestBed.inject(Router);
+    await router.navigateByUrl('/admin');
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const page = fixture.nativeElement as HTMLElement;
+    expect(router.url).toBe('/admin');
+    expect(page.querySelector('h1')?.textContent).toContain('Administrator tools');
+    expect(page.querySelector('.primary-navigation a[href="/admin"]')?.textContent?.trim())
+      .toBe('Admin');
+  });
+
   it('surfaces unexpected session restoration errors in the application shell', async () => {
     setRestoreError(new ApiError('Authentication service unavailable', 'server', 503));
     const fixture = TestBed.createComponent(App);
