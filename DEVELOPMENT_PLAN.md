@@ -147,7 +147,7 @@ Work items are intentionally small enough to review and commit independently. Us
   **Accept when:** no protected UI remains available after sign-out.  
   **Commit scope:** `feat(frontend): add sign-out flow`
 - [x] **F2.6 — Protect authenticated routes.** Add an authentication guard and signed-in navigation state without treating client-side guards as a security boundary.
-  **Accept when:** signed-out users are redirected to sign-in and can return to their intended route after authentication.  
+  **Accept when:** signed-out users are redirected to the public home page, can proceed to sign-in, and return to their intended route after authentication.
   **Commit scope:** `feat(frontend): protect authenticated routes`
 - [x] **F2.7 — Add user-interest API methods.** Implement list/add/remove category-interest operations for the current user's ID.
   **Accept when:** request and authorization behavior is covered by service tests and a backend smoke test.  
@@ -156,7 +156,7 @@ Work items are intentionally small enough to review and commit independently. Us
   **Accept when:** changes persist after reloading the settings page and only the current user's interests are shown.  
   **Commit scope:** `feat(frontend): manage category interests`
 - [x] **F2.9 — Agree and implement interest-to-feed behavior.** Signed-in job requests include the access token; the API filters to jobs assigned to any followed category and leaves the catalogue unfiltered when the user follows none. Anonymous job requests remain unfiltered.
-  **Accept when:** the selected behavior is documented, token forwarding and user messaging are covered by frontend tests, and backend query logic builds successfully.
+  **Accept when:** the selected behavior is documented, token forwarding and user messaging are covered by frontend tests, anonymous job requests are rejected, and backend query logic builds successfully.
   **Commit scope:** `feat(frontend): apply verified user interests`
 
 **Phase exit criteria:** a user can sign in, maintain their own interests, refresh a session securely, and sign out; personalized job results are only claimed if the backend contract supports them.
@@ -216,7 +216,7 @@ Work items are intentionally small enough to review and commit independently. Us
 - [x] **F4.5 — Run quality checks and production build.** Run the established lint, test, and production-build commands; resolve issues introduced by frontend work.
   **Accept when:** all required checks pass from a clean local run.
   **Commit scope:** `chore(frontend): pass production quality checks`
-- [ ] **F4.6 — Smoke-test against the backend.** Exercise public browsing, detail views, sign-in, interests, and admin tasks against representative backend data. Record any backend blockers in the contract checks.  
+- [ ] **F4.6 — Smoke-test against the backend.** Verify anonymous requests are rejected, then exercise authenticated job browsing, detail views, interests, and admin tasks against representative backend data. Record any backend blockers in the contract checks.
   **Accept when:** each implemented primary workflow has an observed end-to-end result or a clearly recorded backend dependency.  
   **Commit scope:** `test(frontend): verify backend integration`
 - [x] **F4.7 — Complete accessibility and responsive review.** Check keyboard navigation, labels, focus visibility, contrast, screen-reader announcements, and narrow/wide layouts; fix issues found.
@@ -233,7 +233,7 @@ Work items are intentionally small enough to review and commit independently. Us
 
 Treat the README and API implementation as separate evidence and verify behavior before relying on a route. The inspected implementation currently has these important differences or limitations:
 
-- **F0.1 progress:** source inspection confirms the API defaults to port `3000`; public jobs are mounted at `/api/jobs`, auth at `/api/auth`, protected users/admin/master routes at `/api/users`, `/api/admin`, `/api/master`, and public master reads at `/api/categories`, `/api/skills`, `/api/cities`, and `/api/countries`. Jobs list returns `{ jobs, total, limit, offset, hasMore }`; validation errors return `{ errors }`, and auth errors return `{ error }`. The local runtime check to `127.0.0.1:3000/api/jobs?limit=1` could not connect, so live response, CORS, and cookie behavior remain unverified; do not mark F0.1 complete until verified against a running backend.
+- **F0.1 progress:** the API defaults to port `3000`; job, reference-data, user, admin, and master-data endpoints require an access token. Login is public, refresh uses the refresh cookie, and `/api/auth/me` requires an access token. Jobs list returns `{ jobs, total, limit, offset, hasMore }`; validation errors return `{ errors }`, and auth errors return `{ error }`. The live runtime behavior should be verified against the deployed backend.
 - **Cross-origin auth blockers confirmed in source:** the API server does not configure CORS or credential support, and does not install cookie-parsing middleware, although refresh reads `req.cookies.refresh_token`. Cross-origin frontend auth therefore needs backend configuration before it can work; keep the frontend proxy same-origin during development where possible and verify refresh-cookie parsing with the backend owner before relying on it.
 - The server mounts `/api/master` behind strict authentication, even though its read/schema operations may be described as master-data reads; use the required access token unless the backend contract changes.
 - `GET /api/jobs` accepts the documented filters, but category, skill, city, and country filtering are placeholders; verify or complete these backend behaviors before presenting them as working filters.
@@ -241,7 +241,7 @@ Treat the README and API implementation as separate evidence and verify behavior
 - `GET /api/jobs/:id` response fields and the list response should be captured as stable TypeScript contracts; the frontend should not infer a shape from the database model.
 - The auth login/refresh flow uses an httpOnly refresh cookie. Confirm CORS allows credentials and that the frontend and API cookie settings work in the intended deployment topology.
 - `/api/master` currently has category/keyword reads and creation/linking endpoints plus seed endpoints, but not a complete edit/delete workflow for these entities.
-- Signed-in `GET /api/jobs` requests are filtered to jobs assigned to any followed category; no followed categories and anonymous requests return the unfiltered catalogue. Category/skill/location query-parameter filters remain incomplete.
+- Signed-in `GET /api/jobs` requests are filtered to jobs assigned to any followed category; no followed categories return the unfiltered catalogue, while anonymous requests are rejected. Category/skill/location query-parameter filters remain incomplete.
 - Admin source/area/fetch-run routes exist, but confirm response shapes and permissions for each read route. The current fetch-runs list route does not visibly apply the documented `source_id` filter.
 - The backend work report identifies unfinished Rezi location/category enrichment and a PMTiles decoder verification item; these affect data quality more than frontend implementation, but should be tracked during end-to-end validation.
 - **F4.6 live smoke-test (2026-10-22):** the same-origin development proxy successfully fetched a jobs page (HTTP 200; 3,537 total jobs), a job detail (200), and categories, skills, cities, and countries (all 200). The browser rendered the jobs list and detail, displayed invalid-credential feedback after a sign-in attempt (401), and redirected signed-out account/admin routes to sign-in. Unauthenticated user/admin API requests returned 401 as expected; `POST /api/auth/refresh` also returned 401 because no refresh cookie was present. Successful sign-in, interest changes, and admin mutations remain unverified because no valid local test-account credentials were available; keep F4.6 open until those workflows can be exercised with an authorized account.

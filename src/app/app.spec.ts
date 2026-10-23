@@ -63,7 +63,7 @@ describe('App', () => {
     }).compileComponents();
   });
 
-  it('should render the application shell and default jobs route', async () => {
+  it('renders a sign-in landing page for signed-out visitors', async () => {
     const fixture = TestBed.createComponent(App);
     const router = TestBed.inject(Router);
     await router.navigateByUrl('/');
@@ -71,24 +71,30 @@ describe('App', () => {
     fixture.detectChanges();
 
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(router.url).toBe('/jobs');
+    expect(router.url).toBe('/');
     expect(compiled.querySelector('header nav')?.getAttribute('aria-label')).toBe('Main navigation');
     expect(compiled.querySelector('.brand')?.textContent).toContain('Online Jobs Aggregator');
-    expect(compiled.querySelector('h1')?.textContent).toContain('Find your next opportunity');
+    expect(compiled.querySelector('h1')?.textContent).toContain('The right opportunity starts');
+    expect(compiled.querySelector('.primary-navigation a[href="/jobs"]')).toBeNull();
+    expect(compiled.querySelector('.primary-navigation a[href="/categories"]')).toBeNull();
+    expect(compiled.querySelector('.home-copy a[href="/sign-in"]')?.textContent)
+      .toContain('Sign in to your account');
   });
 
-  it('should navigate to a placeholder route', async () => {
+  it('protects job and category browsing from signed-out visitors', async () => {
     const fixture = TestBed.createComponent(App);
     const router = TestBed.inject(Router);
     await router.navigateByUrl('/categories');
     await fixture.whenStable();
     fixture.detectChanges();
 
+    expect(router.url).toBe('/?returnUrl=%2Fcategories');
     expect((fixture.nativeElement as HTMLElement).querySelector('h1')?.textContent)
-      .toContain('Explore job categories');
+      .toContain('The right opportunity starts');
   });
 
-  it('should render a not-found page for unknown routes', async () => {
+  it('shows authenticated visitors the not-found page for unknown routes', async () => {
+    setAuthenticatedUser({ id: 'user-1', email: 'user@example.com', role: 'user' });
     const fixture = TestBed.createComponent(App);
     const router = TestBed.inject(Router);
     await router.navigateByUrl('/unknown');
@@ -99,29 +105,34 @@ describe('App', () => {
       .toContain('We couldn’t find that page');
   });
 
-  it('redirects signed-out visitors from account routes and preserves their destination', async () => {
+  it('redirects signed-out visitors from account routes to the landing page with their destination', async () => {
     const fixture = TestBed.createComponent(App);
     const router = TestBed.inject(Router);
     await router.navigateByUrl('/account?tab=interests');
     await fixture.whenStable();
     fixture.detectChanges();
 
-    expect(router.url.startsWith('/sign-in')).toBe(true);
+    expect(router.url.startsWith('/?')).toBe(true);
     expect(router.parseUrl(router.url).queryParams['returnUrl'])
       .toBe('/account?tab=interests');
-    expect((fixture.nativeElement as HTMLElement).querySelector('#sign-in-title')).not.toBeNull();
+    expect((fixture.nativeElement as HTMLElement).querySelector('h1')?.textContent)
+      .toContain('The right opportunity starts');
+    expect((fixture.nativeElement as HTMLElement)
+      .querySelector('.home-copy a[href="/sign-in?returnUrl=%2Faccount%3Ftab%3Dinterests"]'))
+      .not.toBeNull();
   });
 
-  it('redirects signed-out visitors from admin routes and preserves their destination', async () => {
+  it('redirects signed-out visitors from admin routes to the landing page and preserves their destination', async () => {
     const fixture = TestBed.createComponent(App);
     const router = TestBed.inject(Router);
     await router.navigateByUrl('/admin?section=users');
     await fixture.whenStable();
     fixture.detectChanges();
 
-    expect(router.url.startsWith('/sign-in')).toBe(true);
+    expect(router.url.startsWith('/?')).toBe(true);
     expect(router.parseUrl(router.url).queryParams['returnUrl']).toBe('/admin?section=users');
-    expect((fixture.nativeElement as HTMLElement).querySelector('#sign-in-title')).not.toBeNull();
+    expect((fixture.nativeElement as HTMLElement).querySelector('h1')?.textContent)
+      .toContain('The right opportunity starts');
   });
 
   it('redirects authenticated non-admin users away from admin routes', async () => {
@@ -136,9 +147,9 @@ describe('App', () => {
     await fixture.whenStable();
     fixture.detectChanges();
 
-    expect(router.url).toBe('/jobs');
+    expect(router.url).toBe('/');
     expect((fixture.nativeElement as HTMLElement).querySelector('h1')?.textContent)
-      .toContain('Find your next opportunity');
+      .toContain('Welcome back');
     expect((fixture.nativeElement as HTMLElement).querySelector('.primary-navigation a[href="/admin"]'))
       .toBeNull();
   });
@@ -176,7 +187,7 @@ describe('App', () => {
     expect(warning?.querySelector('a')?.getAttribute('href')).toBe('/sign-in');
   });
 
-  it('clears the session and returns to jobs after confirmed server logout', async () => {
+  it('clears the session and returns to the landing page after confirmed server logout', async () => {
     setAuthenticatedUser({
       id: 'user-1',
       email: 'user@example.com',
@@ -195,13 +206,13 @@ describe('App', () => {
     const page = fixture.nativeElement as HTMLElement;
     expect(logout).toHaveBeenCalledTimes(1);
     expect(clearSession).toHaveBeenCalledTimes(1);
-    expect(router.url).toBe('/jobs');
+    expect(router.url).toBe('/');
     expect(page.querySelector('.sign-out-button')).toBeNull();
     expect(page.querySelector('.sign-in-link')).not.toBeNull();
     expect(page.querySelector('[role="alert"]')).toBeNull();
   });
 
-  it('clears local state and returns to jobs when server logout fails', async () => {
+  it('clears local state and returns to the landing page when server logout fails', async () => {
     setAuthenticatedUser({
       id: 'user-1',
       email: 'user@example.com',
@@ -226,7 +237,7 @@ describe('App', () => {
     const page = fixture.nativeElement as HTMLElement;
     expect(logout).toHaveBeenCalledTimes(1);
     expect(clearSession).toHaveBeenCalledTimes(1);
-    expect(router.url).toBe('/jobs');
+    expect(router.url).toBe('/');
     expect(page.querySelector('.sign-out-button')).toBeNull();
     expect(page.querySelector('.sign-in-link')).not.toBeNull();
     expect(page.querySelector('[role="alert"]')?.textContent)

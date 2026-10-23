@@ -45,6 +45,6 @@ export class App {
   private finishSignOut(): void {
     this.authSession.clear();
     this.signingOut.set(false);
-    void this.router.navigateByUrl('/jobs');
+    void this.router.navigateByUrl('/');
   }
 }

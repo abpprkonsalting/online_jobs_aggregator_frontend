@@ -13,7 +13,7 @@ import { AuthSessionService } from '../data-access/auth-session.service';
       <div class="sign-in-card">
         <p class="eyebrow">Your next opportunity</p>
         <h1 id="sign-in-title">Welcome back</h1>
-        <p class="intro">Sign in to continue to your account.</p>
+        <p class="intro">Sign in to continue to your authorized account.</p>
 
         <form [formGroup]="form" (ngSubmit)="submit()" (input)="clearError()">
           <div class="field">

@@ -7,6 +7,7 @@ import { NotFoundPage } from './pages/not-found-page';
 import { PlaceholderPage } from './pages/placeholder-page';
 import { CategoryInterestsPage } from './features/auth/pages/category-interests-page';
 import { adminGuard } from './features/auth/guards/admin.guard';
+import { HomePage } from './pages/home-page';
 import { AdminUsersPage } from './features/admin/pages/admin-users-page';
 import { AdminSourcesPage } from './features/admin/pages/admin-sources-page';
 import { AdminGeographicAreasPage } from './features/admin/pages/admin-geographic-areas-page';
@@ -15,13 +16,15 @@ import { AdminFetchRunsPage } from './features/admin/pages/admin-fetch-runs-page
 import { AdminMasterDataPage } from './features/admin/pages/admin-master-data-page';
 
 export const routes: Routes = [
-  { path: '', pathMatch: 'full', redirectTo: 'jobs' },
+  { path: '', pathMatch: 'full', component: HomePage },
   {
     path: 'jobs/:id',
+    canActivate: [authGuard],
     component: JobDetailPage,
   },
   {
     path: 'jobs',
+    canActivate: [authGuard],
     component: JobSearchPage,
   },
   {
@@ -62,6 +65,7 @@ export const routes: Routes = [
   },
   {
     path: 'categories',
+    canActivate: [authGuard],
     component: PlaceholderPage,
     data: {
       title: 'Explore job categories',
@@ -72,5 +76,5 @@ export const routes: Routes = [
     path: 'sign-in',
     component: SignInPage,
   },
-  { path: '**', component: NotFoundPage },
+  { path: '**', canActivate: [authGuard], component: NotFoundPage },
 ];

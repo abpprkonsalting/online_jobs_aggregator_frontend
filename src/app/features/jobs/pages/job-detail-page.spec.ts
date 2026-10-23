@@ -8,6 +8,7 @@ import { ApiClient } from '../../../core/http/api-client';
 import { apiErrorInterceptor } from '../../../core/http/api-error.interceptor';
 import { JobDetail } from '../../../core/models/api.models';
 import { routes } from '../../../app.routes';
+import { AuthSessionService } from '../../auth/data-access/auth-session.service';
 
 const detail: JobDetail = {
   id: 'job-1',
@@ -52,6 +53,13 @@ describe('JobDetailPage', () => {
         provideHttpClientTesting(),
         { provide: API_BASE_URL, useValue: '/api' },
         ApiClient,
+        {
+          provide: AuthSessionService,
+          useValue: {
+            isAuthenticated: () => true,
+            currentUser: () => ({ id: 'user-1', email: 'user@example.com', role: 'user' }),
+          },
+        },
         provideRouter(routes),
       ],
     }).compileComponents();

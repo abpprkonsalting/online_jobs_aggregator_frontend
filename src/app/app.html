@@ -3,17 +3,17 @@
 <div class="app-shell">
   <header class="site-header">
     <div class="header-content">
-      <a class="brand" routerLink="/jobs" aria-label="Online Jobs Aggregator home">
+      <a class="brand" routerLink="/" aria-label="Online Jobs Aggregator home">
         <span class="brand-mark" aria-hidden="true">OJA</span>
         <span>Online Jobs Aggregator</span>
       </a>
 
       <nav class="primary-navigation" aria-label="Main navigation">
-        <a routerLink="/jobs" routerLinkActive="active" ariaCurrentWhenActive="page">Jobs</a>
-        <a routerLink="/categories" routerLinkActive="active" ariaCurrentWhenActive="page">
-          Categories
-        </a>
         @if (authSession.isAuthenticated()) {
+          <a routerLink="/jobs" routerLinkActive="active" ariaCurrentWhenActive="page">Jobs</a>
+          <a routerLink="/categories" routerLinkActive="active" ariaCurrentWhenActive="page">
+            Categories
+          </a>
           <a routerLink="/account" routerLinkActive="active" ariaCurrentWhenActive="page">
             Account
           </a>
@@ -32,14 +32,7 @@
             {{ signingOut() ? 'Signing out…' : 'Sign out' }}
           </button>
         } @else {
-          <a
-            class="sign-in-link"
-            routerLink="/sign-in"
-            routerLinkActive="active"
-            ariaCurrentWhenActive="page"
-          >
-            Sign in
-          </a>
+          <a class="sign-in-link" routerLink="/sign-in">Sign in</a>
         }
       </nav>
     </div>
