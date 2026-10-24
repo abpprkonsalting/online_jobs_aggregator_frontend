@@ -4,6 +4,7 @@ import { provideRouter, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 import { ApiError } from './core/http/api-error';
+import { ApiClient } from './core/http/api-client';
 import { App } from './app';
 import { routes } from './app.routes';
 import { JobsApiService } from './features/jobs/data-access/jobs-api.service';
@@ -17,6 +18,7 @@ describe('App', () => {
   let setAuthenticatedUser: (user: AuthUser | null) => void;
   let clearSession: ReturnType<typeof vi.fn>;
   let logout: ReturnType<typeof vi.fn>;
+  let getBackendVersion: ReturnType<typeof vi.fn>;
 
   beforeEach(async () => {
     const restoreError = signal<ApiError | null>(null);
@@ -32,10 +34,18 @@ describe('App', () => {
       isAuthenticated.set(false);
     });
     logout = vi.fn().mockReturnValue(of({ success: true }));
+    getBackendVersion = vi.fn().mockReturnValue(of({
+      releaseTag: 'v0.1.2',
+      buildStatus: 'release',
+    }));
     await TestBed.configureTestingModule({
       imports: [App],
       providers: [
         provideRouter(routes),
+        {
+          provide: ApiClient,
+          useValue: { get: getBackendVersion },
+        },
         {
           provide: JobsApiService,
           useValue: {
@@ -79,6 +89,35 @@ describe('App', () => {
     expect(compiled.querySelector('.primary-navigation a[href="/categories"]')).toBeNull();
     expect(compiled.querySelector('.home-copy a[href="/sign-in"]')?.textContent)
       .toContain('Sign in to your account');
+    expect(compiled.querySelector('.backend-version')?.textContent?.trim())
+      .toBe('Backend v0.1.2 (API + Fetcher)');
+    expect(getBackendVersion).toHaveBeenCalledWith('version');
+  });
+
+  it('shows the backend version as unavailable when the version request fails', async () => {
+    getBackendVersion.mockReturnValue(throwError(() => new Error('Backend unavailable')));
+    const fixture = TestBed.createComponent(App);
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector('.backend-version')?.textContent?.trim())
+      .toBe('Backend version unavailable');
+    expect(compiled.querySelector('.site-footer-content p')?.textContent)
+      .toContain('Find your next opportunity.');
+  });
+
+  it('shows the backend build status when there is no release tag', async () => {
+    getBackendVersion.mockReturnValue(of({
+      releaseTag: null,
+      buildStatus: 'development',
+    }));
+    const fixture = TestBed.createComponent(App);
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect((fixture.nativeElement as HTMLElement).querySelector('.backend-version')?.textContent?.trim())
+      .toBe('Backend development (API + Fetcher)');
   });
 
   it('protects job and category browsing from signed-out visitors', async () => {
