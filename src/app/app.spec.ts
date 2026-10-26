@@ -3,6 +3,7 @@ import { signal } from '@angular/core';
 import { provideRouter, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { vi } from 'vitest';
+import { HttpClient } from '@angular/common/http';
 import { ApiError } from './core/http/api-error';
 import { ApiClient } from './core/http/api-client';
 import { App } from './app';
@@ -19,6 +20,7 @@ describe('App', () => {
   let clearSession: ReturnType<typeof vi.fn>;
   let logout: ReturnType<typeof vi.fn>;
   let getBackendVersion: ReturnType<typeof vi.fn>;
+  let getFrontendVersion: ReturnType<typeof vi.fn>;
 
   beforeEach(async () => {
     const restoreError = signal<ApiError | null>(null);
@@ -38,6 +40,10 @@ describe('App', () => {
       releaseTag: 'v0.1.2',
       buildStatus: 'release',
     }));
+    getFrontendVersion = vi.fn().mockReturnValue(of({
+      releaseTag: 'v1.0.0',
+      buildStatus: 'release',
+    }));
     await TestBed.configureTestingModule({
       imports: [App],
       providers: [
@@ -45,6 +51,10 @@ describe('App', () => {
         {
           provide: ApiClient,
           useValue: { get: getBackendVersion },
+        },
+        {
+          provide: HttpClient,
+          useValue: { get: getFrontendVersion },
         },
         {
           provide: JobsApiService,
@@ -89,9 +99,10 @@ describe('App', () => {
     expect(compiled.querySelector('.primary-navigation a[href="/categories"]')).toBeNull();
     expect(compiled.querySelector('.home-copy a[href="/sign-in"]')?.textContent)
       .toContain('Sign in to your account');
-    expect(compiled.querySelector('.backend-version')?.textContent?.trim())
-      .toBe('Backend v0.1.2 (API + Fetcher)');
+    expect(compiled.querySelector('.version-info')?.textContent?.trim())
+      .toBe('Backend v0.1.2 (API + Fetcher) --- Frontend v1.0.0');
     expect(getBackendVersion).toHaveBeenCalledWith('version');
+    expect(getFrontendVersion).toHaveBeenCalledWith('/version.json');
   });
 
   it('shows the backend version as unavailable when the version request fails', async () => {
@@ -101,8 +112,8 @@ describe('App', () => {
     fixture.detectChanges();
 
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('.backend-version')?.textContent?.trim())
-      .toBe('Backend version unavailable');
+    expect(compiled.querySelector('.version-info')?.textContent?.trim())
+      .toBe('Backend version unavailable --- Frontend v1.0.0');
     expect(compiled.querySelector('.site-footer-content p')?.textContent)
       .toContain('Find your next opportunity.');
   });
@@ -116,8 +127,18 @@ describe('App', () => {
     await fixture.whenStable();
     fixture.detectChanges();
 
-    expect((fixture.nativeElement as HTMLElement).querySelector('.backend-version')?.textContent?.trim())
-      .toBe('Backend development (API + Fetcher)');
+    expect((fixture.nativeElement as HTMLElement).querySelector('.version-info')?.textContent?.trim())
+      .toBe('Backend development (API + Fetcher) --- Frontend v1.0.0');
+  });
+
+  it('shows the frontend version as unavailable when the version request fails', async () => {
+    getFrontendVersion.mockReturnValue(throwError(() => new Error('Frontend unavailable')));
+    const fixture = TestBed.createComponent(App);
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect((fixture.nativeElement as HTMLElement).querySelector('.version-info')?.textContent?.trim())
+      .toBe('Backend v0.1.2 (API + Fetcher) --- Frontend version unavailable');
   });
 
   it('protects job and category browsing from signed-out visitors', async () => {

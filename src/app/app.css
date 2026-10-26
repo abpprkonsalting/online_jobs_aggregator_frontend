@@ -188,7 +188,7 @@
   color: var(--color-accent);
 }
 
-.backend-version {
+.version-info {
   flex: 0 0 auto;
   color: var(--color-muted);
   font-size: 0.8125rem;
@@ -239,7 +239,7 @@
     flex-basis: 100%;
   }
 
-  .backend-version {
+  .version-info {
     margin-left: auto;
   }
 }

@@ -2,13 +2,22 @@ name: Deploy Frontend
 
 on:
   push:
-    branches: [master]
+    tags: ['v*']
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Restore annotated release tag after checkout
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          git fetch --force --no-tags origin "$GITHUB_REF:$GITHUB_REF"
+          test "$(git cat-file -t "$GITHUB_REF")" = tag
+          test "$(git rev-parse "$GITHUB_REF^{}")" = "$GITHUB_SHA"
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -22,11 +31,16 @@ jobs:
       - name: Run lint
         run: npm run lint
 
-      - name: Run tests
+      - name: Run frontend tests
         run: npm test -- --watch=false
 
       - name: Build production bundle
         run: npm run build
+
+      - name: Generate deployment version metadata
+        env:
+          DEPLOYMENT_ENVIRONMENT: production
+        run: npm run version:metadata
 
       - name: Deploy to VPS
         env:
