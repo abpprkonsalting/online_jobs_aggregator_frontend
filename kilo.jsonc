@@ -1,0 +1,6 @@
+{
+  "$schema": "https://app.kilo.ai/config.json",
+  "commit_message": {
+    "prompt": "Write commit messages in the format [keyword]([main area]/[sub area]): [message]. You MUST include the main area in parentheses after the keyword. The [sub area] is optional. Allowed keywords: feat, fix, refactor, docs, test, chore. Main areas for frontend: features, core, ui, pages, api. Keep subjects under 50 characters, use imperative mood, no trailing period. Use '!' after the scope for breaking changes. Example: feat(features/auth): add sign-out flow."
+  }
+}
