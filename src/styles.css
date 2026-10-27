@@ -50,3 +50,13 @@ select,
 textarea {
   font: inherit;
 }
+
+.p-paginator {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+}
+
+.p-paginator-current {
+  margin-right: auto;
+}

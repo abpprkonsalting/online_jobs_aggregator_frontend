@@ -157,7 +157,6 @@
 }
 
 .page-main {
-  width: min(100% - 3rem, 72rem);
   flex: 1;
   margin-inline: auto;
   padding-block: clamp(3.5rem, 9vw, 7.5rem);
@@ -220,7 +219,6 @@
   }
 
   .page-main {
-    width: min(100% - 2rem, 72rem);
     padding-block: 3.5rem;
   }
 

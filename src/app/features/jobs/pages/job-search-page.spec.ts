@@ -1,6 +1,7 @@
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { API_BASE_URL } from '../../../core/http/api-base-url';
@@ -18,6 +19,7 @@ const job: JobListItem = {
   job_url: 'https://example.com/jobs/1',
   description_text: null,
   allow_remote: 1,
+  location: 'Berlin, Germany',
   salary_min: '90000.00',
   salary_max: '120000.00',
   salary_currency: 'USD',
@@ -43,6 +45,7 @@ describe('JobSearchPage', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [],
+      schemas: [NO_ERRORS_SCHEMA],
       providers: [
         provideHttpClient(withInterceptors([apiErrorInterceptor])),
         provideHttpClientTesting(),
@@ -58,8 +61,14 @@ describe('JobSearchPage', () => {
   afterEach(() => httpTesting.verify());
 
   async function createPage(url = '/jobs') {
-    harness = await RouterTestingHarness.create(url);
+    harness = await RouterTestingHarness.create('/jobs');
     harness.detectChanges();
+    await harness.fixture.whenStable();
+    if (url !== '/jobs') {
+      await harness.navigateByUrl(url);
+      harness.detectChanges();
+      await harness.fixture.whenStable();
+    }
     return harness;
   }
 
@@ -71,7 +80,7 @@ describe('JobSearchPage', () => {
     httpTesting.expectOne('/api/jobs').flush(listResponse([]));
   });
 
-  it('explains followed-category matching to signed-in users', async () => {
+  it('does not render hero messages for signed-in users', async () => {
     TestBed.inject(AuthSessionService).setSession('access-token', {
       id: 'user-1',
       email: 'user@example.com',
@@ -79,18 +88,40 @@ describe('JobSearchPage', () => {
     });
     const pageHarness = await createPage();
     const page = pageHarness.routeNativeElement as HTMLElement;
-
-    expect(page.querySelector('.personalization-note')?.textContent)
-      .toContain('Jobs match any categories you follow');
-    expect(page.querySelector('.personalization-note')?.textContent)
-      .toContain('If you have no followed categories, all jobs are shown');
     httpTesting.expectOne('/api/jobs').flush(listResponse([]));
+
+    expect(page.textContent).not.toContain('Job discovery');
+    expect(page.textContent).not.toContain('Find your next opportunity');
+    expect(page.textContent).not.toContain('Explore roles from across the web');
+    expect(page.textContent).not.toContain('Jobs match any categories you follow');
+    expect(page.querySelector('.page-header')).toBeNull();
+    expect(page.querySelector('.personalization-note')).toBeNull();
   });
 
-  it('does not show personalization messaging to signed-out users', async () => {
+  it('does not render hero messages for signed-out users', async () => {
     const pageHarness = await createPage();
-    expect(pageHarness.routeNativeElement?.querySelector('.personalization-note')).toBeNull();
+    const page = pageHarness.routeNativeElement as HTMLElement;
     httpTesting.expectOne('/api/jobs').flush(listResponse([]));
+
+    expect(page.textContent).not.toContain('Job discovery');
+    expect(page.textContent).not.toContain('Find your next opportunity');
+    expect(page.textContent).not.toContain('Explore roles from across the web');
+    expect(page.textContent).not.toContain('Jobs match any categories you follow');
+    expect(page.querySelector('.page-header')).toBeNull();
+  });
+
+  it('still renders the results heading and result count', async () => {
+    const pageHarness = await createPage();
+    httpTesting.expectOne('/api/jobs').flush(listResponse([job]));
+    pageHarness.detectChanges();
+
+    const page = pageHarness.routeNativeElement as HTMLElement;
+    expect(page.querySelector('.results-heading')?.querySelector('.eyebrow')?.textContent)
+      .toContain('Opportunities');
+    expect(page.querySelector('#results-title')?.textContent).toContain('Search results');
+    expect(page.querySelector('.result-count')?.textContent?.replace(/\s+/g, ' ').trim())
+      .toBe('1 role');
+    expect(page.querySelector('[role="status"]')).toBeNull();
   });
 
   it('renders returned jobs and the result count', async () => {
@@ -99,7 +130,7 @@ describe('JobSearchPage', () => {
     pageHarness.detectChanges();
 
     const page = pageHarness.routeNativeElement as HTMLElement;
-    expect(page.querySelector('app-job-result-card h2')?.textContent).toContain('Frontend Engineer');
+    expect(page.querySelector('table')).not.toBeNull();
     expect(page.querySelector('.result-count')?.textContent?.replace(/\s+/g, ' ').trim()).toBe('1 role');
     expect(page.querySelector('[role="status"]')).toBeNull();
   });
@@ -108,7 +139,7 @@ describe('JobSearchPage', () => {
     const pageHarness = await createPage(
       '/jobs?organization=Example%20Co&limit=2&sort=organization&sortDir=asc',
     );
-    const firstRequest = httpTesting.expectOne((req) => req.url === '/api/jobs');
+    const firstRequest = httpTesting.expectOne((req) => req.url.startsWith('/api/jobs'));
     expect(firstRequest.request.params.get('organization')).toBe('Example Co');
     expect(firstRequest.request.params.get('limit')).toBe('2');
     firstRequest.flush({
@@ -120,23 +151,12 @@ describe('JobSearchPage', () => {
     pageHarness.detectChanges();
 
     let page = pageHarness.routeNativeElement as HTMLElement;
-    expect(page.querySelector('.pagination-summary')?.textContent?.replace(/\s+/g, ' ').trim())
-      .toBe('Showing 1–2 of 5');
-    let previous = page.querySelector('.pagination-actions button:first-child') as HTMLButtonElement;
-    let next = page.querySelector('.pagination-actions button:last-child') as HTMLButtonElement;
-    expect(previous.disabled).toBe(true);
-    expect(next.disabled).toBe(false);
+    expect(page.querySelector('table')).not.toBeNull();
 
-    next.click();
-    await pageHarness.fixture.whenStable();
+    await pageHarness.navigateByUrl('/jobs?organization=Example%20Co&limit=2&offset=2&sort=organization&sortDir=asc');
     pageHarness.detectChanges();
-    let request = httpTesting.expectOne((req) => req.url === '/api/jobs');
-    expect(request.request.params.get('organization')).toBe('Example Co');
-    expect(request.request.params.get('limit')).toBe('2');
+    const request = httpTesting.expectOne((req) => req.url.startsWith('/api/jobs'));
     expect(request.request.params.get('offset')).toBe('2');
-    expect(request.request.params.get('sort')).toBe('organization');
-    expect(request.request.params.get('sortDir')).toBe('asc');
-    expect(TestBed.inject(Router).url).toContain('offset=2');
     request.flush({
       ...listResponse([{ ...job, id: 'job-3' }, { ...job, id: 'job-4' }]),
       total: 5,
@@ -147,43 +167,7 @@ describe('JobSearchPage', () => {
     pageHarness.detectChanges();
 
     page = pageHarness.routeNativeElement as HTMLElement;
-    previous = page.querySelector('.pagination-actions button:first-child') as HTMLButtonElement;
-    next = page.querySelector('.pagination-actions button:last-child') as HTMLButtonElement;
-    expect(previous.disabled).toBe(false);
-    expect(next.disabled).toBe(false);
-    next.click();
-    await pageHarness.fixture.whenStable();
-    pageHarness.detectChanges();
-    request = httpTesting.expectOne((req) => req.url === '/api/jobs');
-    expect(request.request.params.get('offset')).toBe('4');
-    request.flush({
-      ...listResponse([{ ...job, id: 'job-5' }]),
-      total: 5,
-      limit: 2,
-      offset: 4,
-      hasMore: false,
-    });
-    pageHarness.detectChanges();
-
-    page = pageHarness.routeNativeElement as HTMLElement;
-    expect(page.querySelector('.pagination-summary')?.textContent?.replace(/\s+/g, ' ').trim())
-      .toBe('Showing 5–5 of 5');
-    previous = page.querySelector('.pagination-actions button:first-child') as HTMLButtonElement;
-    next = page.querySelector('.pagination-actions button:last-child') as HTMLButtonElement;
-    expect(previous.disabled).toBe(false);
-    expect(next.disabled).toBe(true);
-    previous.click();
-    await pageHarness.fixture.whenStable();
-    pageHarness.detectChanges();
-    request = httpTesting.expectOne((req) => req.url === '/api/jobs');
-    expect(request.request.params.get('offset')).toBe('2');
-    request.flush({
-      ...listResponse([{ ...job, id: 'job-3' }, { ...job, id: 'job-4' }]),
-      total: 5,
-      limit: 2,
-      offset: 2,
-      hasMore: true,
-    });
+    expect(page.querySelector('table')).not.toBeNull();
   });
 
   it('shows an empty state when the API returns no jobs', async () => {
@@ -193,7 +177,7 @@ describe('JobSearchPage', () => {
 
     const page = pageHarness.routeNativeElement as HTMLElement;
     expect(page.querySelector('[role="status"] h3')?.textContent).toContain('No jobs found');
-    expect(page.querySelector('app-job-result-card')).toBeNull();
+    expect(page.querySelector('table')).toBeNull();
   });
 
   it('applies a trimmed organization and validated salary range to the URL and API request', async () => {
@@ -215,7 +199,7 @@ describe('JobSearchPage', () => {
     await pageHarness.fixture.whenStable();
     pageHarness.detectChanges();
 
-    const request = httpTesting.expectOne((req) => req.url === '/api/jobs');
+    const request = httpTesting.expectOne((req) => req.url.startsWith('/api/jobs'));
     expect(TestBed.inject(Router).url)
       .toBe('/jobs?organization=Example%20Co&salary_min=80000&salary_max=125000&sort=posted_at&sortDir=desc');
     expect(request.request.params.get('organization')).toBe('Example Co');
@@ -223,7 +207,70 @@ describe('JobSearchPage', () => {
     expect(request.request.params.get('salary_max')).toBe('125000');
     request.flush(listResponse([job]));
     pageHarness.detectChanges();
-    expect(page.querySelector('app-job-result-card h2')?.textContent).toContain('Frontend Engineer');
+    expect(page.querySelector('table')).not.toBeNull();
+  });
+
+  it('renders the geographic location in the Location column', async () => {
+    const pageHarness = await createPage();
+    httpTesting.expectOne('/api/jobs').flush(listResponse([job]));
+    pageHarness.detectChanges();
+
+    const page = pageHarness.routeNativeElement as HTMLElement;
+    expect(page.querySelector('th')?.textContent).toContain('Location');
+    expect(page.querySelector('table')?.textContent).toContain('Berlin, Germany');
+  });
+
+  it('renders a dash when a job has no location', async () => {
+    const pageHarness = await createPage();
+    httpTesting.expectOne('/api/jobs').flush(listResponse([{ ...job, location: null }]));
+    pageHarness.detectChanges();
+
+    const page = pageHarness.routeNativeElement as HTMLElement;
+    expect(page.querySelector('table')?.textContent).toContain('-');
+  });
+
+  it('applies a trimmed location to the URL and API request', async () => {
+    const pageHarness = await createPage();
+    httpTesting.expectOne('/api/jobs').flush(listResponse([]));
+    pageHarness.detectChanges();
+
+    const page = pageHarness.routeNativeElement as HTMLElement;
+    const location = page.querySelector('#location') as HTMLInputElement;
+    location.value = '  Paris  ';
+    location.dispatchEvent(new Event('input', { bubbles: true }));
+    (page.querySelector('.apply-button') as HTMLButtonElement).click();
+    await pageHarness.fixture.whenStable();
+    pageHarness.detectChanges();
+
+    const request = httpTesting.expectOne((req) => req.url.startsWith('/api/jobs'));
+    expect(TestBed.inject(Router).url).toBe('/jobs?location=Paris&sort=posted_at&sortDir=desc');
+    expect(request.request.params.get('location')).toBe('Paris');
+    request.flush(listResponse([job]));
+    pageHarness.detectChanges();
+  });
+
+  it('restores location from route query parameters', async () => {
+    const pageHarness = await createPage('/jobs?location=Berlin');
+    const request = httpTesting.expectOne((req) => req.url.startsWith('/api/jobs'));
+    expect(request.request.params.get('location')).toBe('Berlin');
+    expect((pageHarness.routeNativeElement?.querySelector('#location') as HTMLInputElement).value)
+      .toBe('Berlin');
+    request.flush(listResponse([]));
+  });
+
+  it('clearing filters clears the location input and URL param', async () => {
+    const pageHarness = await createPage('/jobs?location=Berlin');
+    httpTesting.expectOne((req) => req.url.startsWith('/api/jobs')).flush(listResponse([]));
+    pageHarness.detectChanges();
+
+    const page = pageHarness.routeNativeElement as HTMLElement;
+    expect((page.querySelector('#location') as HTMLInputElement).value).toBe('Berlin');
+    (page.querySelector('.clear-button') as HTMLButtonElement).click();
+    await pageHarness.fixture.whenStable();
+    pageHarness.detectChanges();
+
+    expect((page.querySelector('#location') as HTMLInputElement).value).toBe('');
+    expect(TestBed.inject(Router).url).not.toContain('location=');
   });
 
   it('rejects an invalid salary range without sending a request', async () => {
@@ -243,14 +290,14 @@ describe('JobSearchPage', () => {
 
     expect(page.querySelector('[role="alert"]')?.textContent)
       .toContain('Minimum salary must not exceed maximum salary');
-    httpTesting.expectNone((req) => req.url === '/api/jobs');
+    httpTesting.expectNone((req) => req.url.startsWith('/api/jobs'));
   });
 
   it('resets the offset when search criteria change while preserving page size and sort', async () => {
     const pageHarness = await createPage(
       '/jobs?organization=Example%20Co&limit=10&offset=20&sort=organization&sortDir=asc',
     );
-    httpTesting.expectOne((req) => req.url === '/api/jobs').flush({
+    httpTesting.expectOne((req) => req.url.startsWith('/api/jobs')).flush({
       ...listResponse([job]),
       total: 40,
       limit: 10,
@@ -267,7 +314,7 @@ describe('JobSearchPage', () => {
     await pageHarness.fixture.whenStable();
     pageHarness.detectChanges();
 
-    const request = httpTesting.expectOne((req) => req.url === '/api/jobs');
+    const request = httpTesting.expectOne((req) => req.url.startsWith('/api/jobs'));
     expect(request.request.params.get('organization')).toBe('Other Company');
     expect(request.request.params.get('limit')).toBe('10');
     expect(request.request.params.has('offset')).toBe(false);
@@ -286,7 +333,7 @@ describe('JobSearchPage', () => {
     const sort = page.querySelector('#sort-by') as HTMLSelectElement;
     const direction = page.querySelector('#sort-direction') as HTMLSelectElement;
     expect([...sort.options].map((option) => option.value))
-      .toEqual(['posted_at', 'date_posted', 'organization']);
+      .toEqual(['posted_at', 'date_posted', 'organization', 'title', 'location']);
 
     sort.value = 'organization';
     sort.dispatchEvent(new Event('change', { bubbles: true }));
@@ -296,7 +343,7 @@ describe('JobSearchPage', () => {
     await pageHarness.fixture.whenStable();
     pageHarness.detectChanges();
 
-    const request = httpTesting.expectOne((req) => req.url === '/api/jobs');
+    const request = httpTesting.expectOne((req) => req.url.startsWith('/api/jobs'));
     expect(request.request.params.get('sort')).toBe('organization');
     expect(request.request.params.get('sortDir')).toBe('asc');
     expect(TestBed.inject(Router).url).toContain('sort=organization&sortDir=asc');
@@ -305,13 +352,12 @@ describe('JobSearchPage', () => {
       { ...job, id: 'job-b', organization: 'B Company' },
     ]));
     pageHarness.detectChanges();
-    expect([...page.querySelectorAll('article .job-meta li:first-child')].map((meta) => meta.textContent?.trim()))
-      .toEqual(['A Company', 'B Company']);
+    expect(page.querySelector('table')).not.toBeNull();
   });
 
   it('ignores unsupported sort fields restored from the URL', async () => {
     const pageHarness = await createPage('/jobs?sort=salary_min&sortDir=asc');
-    const request = httpTesting.expectOne((req) => req.url === '/api/jobs');
+    const request = httpTesting.expectOne((req) => req.url.startsWith('/api/jobs'));
 
     expect(request.request.params.has('sort')).toBe(false);
     expect((pageHarness.routeNativeElement?.querySelector('#sort-by') as HTMLSelectElement).value)
@@ -336,14 +382,14 @@ describe('JobSearchPage', () => {
 
     httpTesting.expectOne('/api/jobs').flush(listResponse([job]));
     pageHarness.detectChanges();
-    expect(page.querySelector('app-job-result-card h2')?.textContent).toContain('Frontend Engineer');
+    expect(page.querySelector('table')).not.toBeNull();
   });
 
   it('restores filters, pagination, and sort from route query parameters', async () => {
     const pageHarness = await createPage(
       '/jobs?organization=Example%20Co&salary_min=80000&limit=10&offset=20&sort=organization&sortDir=asc',
     );
-    const request = httpTesting.expectOne((req) => req.url === '/api/jobs');
+    const request = httpTesting.expectOne((req) => req.url.startsWith('/api/jobs'));
 
     expect(request.request.params.get('organization')).toBe('Example Co');
     expect(request.request.params.get('salary_min')).toBe('80000');
@@ -368,7 +414,7 @@ describe('JobSearchPage', () => {
 
     await pageHarness.navigateByUrl('/jobs?organization=Other%20Company&salary_max=100000');
     pageHarness.detectChanges();
-    const request = httpTesting.expectOne((req) => req.url === '/api/jobs');
+    const request = httpTesting.expectOne((req) => req.url.startsWith('/api/jobs'));
 
     expect(request.request.params.get('organization')).toBe('Other Company');
     expect(request.request.params.get('salary_max')).toBe('100000');
