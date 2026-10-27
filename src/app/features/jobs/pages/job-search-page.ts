@@ -8,7 +8,7 @@ import {
   ValidatorFn,
   Validators,
 } from '@angular/forms';
-import { ActivatedRoute, ParamMap, Params, Router } from '@angular/router';
+import { ActivatedRoute, ParamMap, Params, Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TableModule } from 'primeng/table';
 import { TableLazyLoadEvent } from 'primeng/table';
@@ -49,7 +49,7 @@ const salaryRangeValidator: ValidatorFn = (control: AbstractControl): Validation
 
 @Component({
   selector: 'app-job-search-page',
-  imports: [ReactiveFormsModule, TableModule],
+  imports: [ReactiveFormsModule, TableModule, RouterLink],
   template: `
     <section class="search-page">
       @if (!isDesktop()) {
@@ -182,7 +182,7 @@ const salaryRangeValidator: ValidatorFn = (control: AbstractControl): Validation
                     </tr>
                   </ng-template>
                   <ng-template pTemplate="body" let-job>
-                    <tr>
+                    <tr [routerLink]="['/jobs', job.id]" class="job-row">
                       <td>{{ job.title }}</td>
                       <td>{{ job.organization }}</td>
                       <td>{{ job.allow_remote === 1 ? 'Remote' : job.allow_remote === 0 ? 'On-site' : '-' }}</td>
@@ -448,6 +448,20 @@ const salaryRangeValidator: ValidatorFn = (control: AbstractControl): Validation
     .retry-button:focus-visible {
       outline: 3px solid var(--color-accent);
       outline-offset: 3px;
+    }
+
+    .job-row {
+      cursor: pointer;
+    }
+
+    .job-row:hover {
+      background: #f5f7f6;
+    }
+
+    .job-row td {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     @keyframes spin {
