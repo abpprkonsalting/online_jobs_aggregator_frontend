@@ -6,6 +6,7 @@ export interface JobListItem {
   job_url: string;
   description_text: string | null;
   allow_remote: number | null;
+  location?: string | null;
   salary_min: string | null;
   salary_max: string | null;
   salary_currency: string | null;
