@@ -11,7 +11,8 @@
     "release:plan": "node scripts/versioning.cjs plan",
     "release:tag": "node scripts/versioning.cjs tag",
     "version:metadata": "node scripts/versioning.cjs metadata",
-    "test:versioning": "vitest run tests/versioning.test.ts"
+    "test:versioning": "vitest run tests/versioning.test.ts",
+    "commit:generate": "node scripts/generate-commit.cjs"
   },
   "private": true,
   "packageManager": "npm@11.16.0",
