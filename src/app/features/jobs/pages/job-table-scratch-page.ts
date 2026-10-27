@@ -22,7 +22,7 @@ import {
   SortDirection,
   SortCriterion,
 } from '../../../core/models/api.models';
-import { JobMockService } from '../data-access/job-mock.service';
+import { JobsApiService } from '../data-access/jobs-api.service';
 
 const JOB_SORT_FIELDS: ReadonlySet<string> = new Set([
   'posted_at',
@@ -55,7 +55,7 @@ const salaryRangeValidator: ValidatorFn = (control: AbstractControl): Validation
         <p class="eyebrow">Job table preview</p>
         <h1 id="scratch-title">Jobs table</h1>
         <p class="scratch-intro">
-          Table built from scratch consuming from JobMockService. Columns match the card fields:
+          Table built from scratch consuming from the existing API (JobsApiService). Columns match the card fields:
           title, organization, location, salary, posted date.
         </p>
       </header>
@@ -167,6 +167,7 @@ const salaryRangeValidator: ValidatorFn = (control: AbstractControl): Validation
             } @else {
               <p-table
                 [value]="currentState.value.jobs"
+                [first]="currentState.value.offset"
                 [paginator]="true"
                 [paginatorPosition]="'both'"
                 [rows]="currentState.value.limit"
@@ -569,7 +570,7 @@ const salaryRangeValidator: ValidatorFn = (control: AbstractControl): Validation
   `,
 })
 export class JobTableScratchPage implements OnInit {
-  private readonly jobMock = inject(JobMockService);
+  private readonly jobsApi = inject(JobsApiService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
@@ -668,7 +669,7 @@ export class JobTableScratchPage implements OnInit {
     }
     this.currentQuery = query;
     this.state.set({ status: 'loading' });
-    this.jobMock.list(query).subscribe({
+    this.jobsApi.list(query).subscribe({
       next: (value) => this.state.set({ status: 'loaded', value }),
       error: (error: ApiError) => this.state.set({ status: 'error', error }),
     });
