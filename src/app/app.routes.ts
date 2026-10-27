@@ -3,6 +3,7 @@ import { authGuard } from './features/auth/guards/auth.guard';
 import { SignInPage } from './features/auth/pages/sign-in-page';
 import { JobDetailPage } from './features/jobs/pages/job-detail-page';
 import { JobSearchPage } from './features/jobs/pages/job-search-page';
+import { JobTableScratchPage } from './features/jobs/pages/job-table-scratch-page';
 import { NotFoundPage } from './pages/not-found-page';
 import { PlaceholderPage } from './pages/placeholder-page';
 import { CategoryInterestsPage } from './features/auth/pages/category-interests-page';
@@ -17,6 +18,11 @@ import { AdminMasterDataPage } from './features/admin/pages/admin-master-data-pa
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', component: HomePage },
+  {
+    path: 'jobs/table-scratch',
+    canActivate: [authGuard],
+    component: JobTableScratchPage,
+  },
   {
     path: 'jobs/:id',
     canActivate: [authGuard],

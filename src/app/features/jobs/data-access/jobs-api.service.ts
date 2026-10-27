@@ -16,11 +16,18 @@ export class JobsApiService {
     if (query.offset !== undefined) {
       params = params.set('offset', query.offset);
     }
-    if (query.sort !== undefined) {
-      params = params.set('sort', query.sort);
-    }
-    if (query.sortDir !== undefined) {
-      params = params.set('sortDir', query.sortDir);
+    if (query.sorts && query.sorts.length > 0) {
+      for (const criterion of query.sorts) {
+        params = params.append('sort', criterion.field);
+        params = params.append('sortDir', criterion.dir);
+      }
+    } else {
+      if (query.sort !== undefined) {
+        params = params.set('sort', query.sort);
+      }
+      if (query.sortDir !== undefined) {
+        params = params.set('sortDir', query.sortDir);
+      }
     }
     if (query.salary_min !== undefined) {
       params = params.set('salary_min', query.salary_min);

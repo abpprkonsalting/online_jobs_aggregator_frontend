@@ -1,4 +1,4 @@
-import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import {
   AbstractControl,
   FormControl,
@@ -10,14 +10,17 @@ import {
 } from '@angular/forms';
 import { ActivatedRoute, ParamMap, Params, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { JobResultCard } from '../components/job-result-card';
+import { TableModule } from 'primeng/table';
+import { TableLazyLoadEvent } from 'primeng/table';
 import { ApiError } from '../../../core/http/api-error';
 import { AsyncState } from '../../../core/models/async-state';
 import {
+  JobListItem,
   JobListQuery,
   JobListResponse,
   JobSortField,
   SortDirection,
+  SortCriterion,
 } from '../../../core/models/api.models';
 import { JobsApiService } from '../data-access/jobs-api.service';
 
@@ -25,6 +28,9 @@ const JOB_SORT_FIELDS: ReadonlySet<string> = new Set([
   'posted_at',
   'date_posted',
   'organization',
+  'title',
+  'location',
+  'salary',
 ]);
 
 function isJobSortField(value: string | null): value is JobSortField {
@@ -42,7 +48,7 @@ const salaryRangeValidator: ValidatorFn = (control: AbstractControl): Validation
 
 @Component({
   selector: 'app-job-search-page',
-  imports: [JobResultCard, ReactiveFormsModule],
+  imports: [ReactiveFormsModule, TableModule],
   template: `
     <section class="search-page">
       <form class="filters-bar" [formGroup]="filterForm" (ngSubmit)="applyFilters()">
@@ -52,6 +58,8 @@ const salaryRangeValidator: ValidatorFn = (control: AbstractControl): Validation
             <option value="posted_at">Recently posted</option>
             <option value="date_posted">Original posting date</option>
             <option value="organization">Organization</option>
+            <option value="title">Job title</option>
+            <option value="location">Location</option>
           </select>
         </div>
 
@@ -123,18 +131,19 @@ const salaryRangeValidator: ValidatorFn = (control: AbstractControl): Validation
             </span>
           }
         </div>
+
         @switch (currentState.status) {
           @case ('loading') {
             <div class="empty-results" role="status" aria-live="polite">
               <span class="loading-indicator" aria-hidden="true"></span>
               <h3>Loading jobs</h3>
-              <p>We’re gathering the latest opportunities.</p>
+              <p>We're gathering the latest opportunities.</p>
             </div>
           }
           @case ('error') {
             <div class="empty-results" role="alert">
               <span class="empty-icon error-icon" aria-hidden="true">!</span>
-              <h3>We couldn’t load jobs</h3>
+              <h3>We couldn't load jobs</h3>
               <p>{{ currentState.error.message }}</p>
               <button type="button" class="retry-button" (click)="loadJobs()">Try again</button>
             </div>
@@ -147,35 +156,63 @@ const salaryRangeValidator: ValidatorFn = (control: AbstractControl): Validation
                 <p>There are no matching jobs right now. Please check back later.</p>
               </div>
             } @else {
-              <div class="job-list" aria-label="Job results">
-                @for (job of currentState.value.jobs; track job.id) {
-                  <app-job-result-card [job]="job" />
-                }
-              </div>
-              <nav class="pagination" aria-label="Job result pages">
-                <p class="pagination-summary" aria-live="polite">
-                  Showing {{ currentState.value.offset + 1 }}–{{ currentState.value.offset + currentState.value.jobs.length }}
-                  of {{ currentState.value.total }}
-                </p>
-                <div class="pagination-actions">
-                  <button
-                    type="button"
-                    class="clear-button"
-                    [disabled]="currentState.value.offset <= 0"
-                    (click)="changePage(currentState.value, -1)"
-                  >
-                    Previous
-                  </button>
-                  <button
-                    type="button"
-                    class="clear-button"
-                    [disabled]="!currentState.value.hasMore"
-                    (click)="changePage(currentState.value, 1)"
-                  >
-                    Next
-                  </button>
-                </div>
-              </nav>
+              <p-table
+                [value]="currentState.value.jobs"
+                [paginator]="true"
+                [rows]="currentState.value.limit"
+                [totalRecords]="currentState.value.total"
+                [rowsPerPageOptions]="[10, 20, 50]"
+                [lazy]="true"
+                [loading]="state().status === 'loading'"
+                [sortMode]="'multiple'"
+                (onLazyLoad)="onLazyLoad($event)"
+                (onSort)="onSort($event)"
+                [showCurrentPageReport]="true"
+                currentPageReportTemplate="Showing {first} to {last} of {totalRecords} roles"
+                [tableStyle]="{ 'min-width': '100%' }"
+                role="table"
+              >
+                <ng-template pTemplate="header">
+                  <tr>
+                    <th pSortableColumn="title">Title <p-sortIcon field="title"></p-sortIcon></th>
+                    <th pSortableColumn="organization">Organization <p-sortIcon field="organization"></p-sortIcon></th>
+                    <th pSortableColumn="location">Location <p-sortIcon field="location"></p-sortIcon></th>
+                    <th pSortableColumn="salary">Salary <p-sortIcon field="salary"></p-sortIcon></th>
+                    <th pSortableColumn="posted_at">Posted <p-sortIcon field="posted_at"></p-sortIcon></th>
+                  </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-job>
+                  <tr>
+                    <td>{{ job.title }}</td>
+                    <td>{{ job.organization }}</td>
+                    <td>{{ job.allow_remote === 1 ? 'Remote' : job.allow_remote === 0 ? 'On-site' : '-' }}</td>
+                    <td>{{ formatSalary(job) }}</td>
+                    <td>{{ job.posted_at ?? job.date_posted ?? '-' }}</td>
+                  </tr>
+                </ng-template>
+                <ng-template pTemplate="emptymessage">
+                  <tr>
+                    <td colspan="5" style="text-align: center; padding: 2rem;">
+                      <div class="empty-results" role="status">
+                        <span class="empty-icon" aria-hidden="true">↗</span>
+                        <h3>No jobs found</h3>
+                        <p>There are no matching jobs right now. Please check back later.</p>
+                      </div>
+                    </td>
+                  </tr>
+                </ng-template>
+                <ng-template pTemplate="loadingbody">
+                  <tr>
+                    <td colspan="5" style="text-align: center; padding: 2rem;">
+                      <div class="empty-results" role="status" aria-live="polite">
+                        <span class="loading-indicator" aria-hidden="true"></span>
+                        <h3>Loading jobs</h3>
+                        <p>We're gathering the latest opportunities.</p>
+                      </div>
+                    </td>
+                  </tr>
+                </ng-template>
+              </p-table>
             }
           }
         }
@@ -332,6 +369,67 @@ const salaryRangeValidator: ValidatorFn = (control: AbstractControl): Validation
       padding: 0 1rem 1rem;
     }
 
+    .job-table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 0;
+    }
+
+    .job-table thead th {
+      background: var(--color-subtle);
+      color: var(--color-ink);
+      font-weight: 650;
+      text-align: left;
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--color-border);
+      white-space: nowrap;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .job-table thead th:hover {
+      background: var(--color-surface);
+    }
+
+    .job-table tbody td {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--color-border);
+      color: var(--color-ink);
+    }
+
+    .job-table tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    .job-table tbody tr:hover td {
+      background: var(--color-subtle);
+    }
+
+    .sortable::after {
+      content: ' ↕';
+      font-size: 0.75rem;
+      color: var(--color-muted);
+      margin-left: 0.4rem;
+    }
+
+    .p-paginator .p-paginator-first.p-disabled,
+    .p-paginator .p-paginator-prev.p-disabled,
+    .p-paginator .p-paginator-next.p-disabled,
+    .p-paginator .p-paginator-last.p-disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .p-sort-icon {
+      margin-left: 0.4rem;
+      font-size: 0.75rem;
+      color: var(--color-muted);
+    }
+
+    .p-sort-icon.p-sort-icon-down {
+      color: var(--color-ink);
+    }
+
     .empty-results {
       display: flex;
       min-height: 17rem;
@@ -459,6 +557,7 @@ export class JobSearchPage implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
+  private _sortChangeNavigating = false;
   protected readonly state = signal<AsyncState<JobListResponse>>({ status: 'loading' });
   protected readonly filterForm = new FormGroup({
     sort: new FormControl<JobSortField>('posted_at', { nonNullable: true }),
@@ -469,15 +568,34 @@ export class JobSearchPage implements OnInit {
   }, { validators: salaryRangeValidator });
   private currentQuery: JobListQuery = {};
 
+  protected readonly loadedResponse = computed(() => {
+    const s = this.state();
+    return s.status === 'loaded' ? s.value : null;
+  });
+
+  protected formatSalary(job: JobListItem): string {
+    const parts: string[] = [];
+    if (job.salary_min) parts.push(job.salary_min);
+    if (job.salary_max) parts.push(job.salary_max);
+    if (job.salary_currency) parts.push(job.salary_currency);
+    if (job.salary_unit) parts.push(`/ ${job.salary_unit}`);
+    return parts.length > 0 ? parts.join(' ') : '-';
+  }
+
   ngOnInit(): void {
     this.route.queryParamMap
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((params) => {
+        if (this._sortChangeNavigating) {
+          this._sortChangeNavigating = false;
+          return;
+        }
         const query = this.queryFromParams(params);
         this.currentQuery = query;
+        const primary = query.sorts?.[0] ?? { field: 'posted_at', dir: 'desc' };
         this.filterForm.patchValue({
-          sort: query.sort ?? 'posted_at',
-          sortDir: query.sortDir ?? 'desc',
+          sort: primary.field,
+          sortDir: primary.dir,
           organization: query.organization ?? '',
           salaryMin: query.salary_min ?? null,
           salaryMax: query.salary_max ?? null,
@@ -521,6 +639,18 @@ export class JobSearchPage implements OnInit {
   }
 
   protected loadJobs(query: JobListQuery = this.currentQuery): void {
+    // Skip duplicate requests (but not the initial load when currentQuery is empty)
+    const currentSorts = this.currentQuery.sorts ?? [];
+    const newSorts = query.sorts ?? [];
+    if (Object.keys(this.currentQuery).length > 0 &&
+        this.currentQuery.limit === query.limit &&
+        this.currentQuery.offset === query.offset &&
+        this.currentQuery.organization === query.organization &&
+        this.currentQuery.salary_min === query.salary_min &&
+        this.currentQuery.salary_max === query.salary_max &&
+        JSON.stringify(currentSorts) === JSON.stringify(newSorts)) {
+      return;
+    }
     this.currentQuery = query;
     this.state.set({ status: 'loading' });
     this.jobsApi.list(query).subscribe({
@@ -529,23 +659,61 @@ export class JobSearchPage implements OnInit {
     });
   }
 
-  protected changePage(response: JobListResponse, direction: -1 | 1): void {
-    if ((direction === -1 && response.offset <= 0) || (direction === 1 && !response.hasMore)) {
-      return;
-    }
-
-    const offset = direction === -1
-      ? Math.max(0, response.offset - response.limit)
-      : response.offset + response.limit;
+  protected onLazyLoad(event: TableLazyLoadEvent): void {
     const query: JobListQuery = {
       ...this.currentQuery,
-      limit: response.limit,
-      offset,
+      limit: event.rows ?? this.currentQuery.limit ?? 20,
+      offset: event.first ?? 0,
     };
+
+    // If sort metadata is provided by the table, use it
+    if (event.multiSortMeta && event.multiSortMeta.length > 0) {
+      const sorts: SortCriterion[] = event.multiSortMeta.map((m) => ({
+        field: m.field as JobSortField,
+        dir: m.order === 1 ? 'asc' : 'desc',
+      }));
+      query.sorts = sorts;
+      // Also set primary sort for form compatibility
+      query.sort = sorts[0].field;
+      query.sortDir = sorts[0].dir;
+    }
+
+    this._sortChangeNavigating = true;
+    this.loadJobs(query);
 
     void this.router.navigate([], {
       relativeTo: this.route,
       queryParams: this.toUrlParams(query),
+    }).then(() => {
+      this._sortChangeNavigating = false;
+    });
+  }
+
+  protected onSort(event: { multisortmeta?: { field: string; order: number }[] }): void {
+    if (!event.multisortmeta || event.multisortmeta.length === 0) {
+      return;
+    }
+
+    const sorts: SortCriterion[] = event.multisortmeta.map((m) => ({
+      field: m.field as JobSortField,
+      dir: m.order === 1 ? 'asc' : 'desc',
+    }));
+
+    const query: JobListQuery = {
+      ...this.currentQuery,
+      sorts,
+      sort: sorts[0].field,
+      sortDir: sorts[0].dir,
+    };
+
+    this._sortChangeNavigating = true;
+    this.loadJobs(query);
+
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: this.toUrlParams(query),
+    }).then(() => {
+      this._sortChangeNavigating = false;
     });
   }
 
@@ -556,16 +724,33 @@ export class JobSearchPage implements OnInit {
     const salaryMinimum = this.numberParam(params.get('salary_min'));
     const salaryMaximum = this.numberParam(params.get('salary_max'));
     const organization = params.get('organization')?.trim();
-    const sort = params.get('sort');
-    const sortDir = params.get('sortDir');
+    const sortFields = params.getAll('sort').map((v) => v.trim()).filter((v) => v.length > 0);
+    const sortDirs = params.getAll('sortDir').map((v) => v.trim());
 
     if (limit !== undefined) query.limit = limit;
     if (offset !== undefined) query.offset = offset;
     if (salaryMinimum !== undefined) query.salary_min = salaryMinimum;
     if (salaryMaximum !== undefined) query.salary_max = salaryMaximum;
     if (organization) query.organization = organization;
-    if (isJobSortField(sort)) query.sort = sort;
-    if (sortDir === 'asc' || sortDir === 'desc') query.sortDir = sortDir;
+
+    const sorts: SortCriterion[] = [];
+    for (let i = 0; i < sortFields.length; i++) {
+      const field = sortFields[i];
+      const dir: SortDirection = i < sortDirs.length && (sortDirs[i] === 'asc' || sortDirs[i] === 'desc')
+        ? (sortDirs[i] as SortDirection)
+        : 'desc';
+      if (isJobSortField(field)) {
+        sorts.push({ field, dir });
+      }
+    }
+    if (sorts.length > 0) {
+      query.sorts = sorts;
+    } else {
+      const sort = params.get('sort');
+      const sortDir = params.get('sortDir');
+      if (isJobSortField(sort)) query.sort = sort;
+      if (sortDir === 'asc' || sortDir === 'desc') query.sortDir = sortDir;
+    }
 
     return query;
   }
@@ -591,14 +776,25 @@ export class JobSearchPage implements OnInit {
   }
 
   private toUrlParams(query: JobListQuery): Params {
-    return {
+    const params: Params = {
       organization: query.organization ?? null,
       salary_min: query.salary_min ?? null,
       salary_max: query.salary_max ?? null,
       limit: query.limit ?? null,
       offset: query.offset ?? null,
-      sort: query.sort ?? null,
-      sortDir: query.sortDir ?? null,
     };
-  }
-}
+
+    if (query.sorts && query.sorts.length > 0) {
+      // For multi-sort, use repeatable params
+      params['sort'] = query.sorts.map((c) => c.field);
+      params['sortDir'] = query.sorts.map((c) => c.dir);
+    } else if (query.sort) {
+      // Fallback to single sort
+      params['sort'] = query.sort;
+      if (query.sortDir) {
+        params['sortDir'] = query.sortDir;
+      }
+    }
+
+    return params;
+  }}

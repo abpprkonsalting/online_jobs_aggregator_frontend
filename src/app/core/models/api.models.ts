@@ -25,15 +25,24 @@ export interface JobListResponse {
 export type JobSortField =
   | 'posted_at'
   | 'date_posted'
-  | 'organization';
+  | 'title'
+  | 'organization'
+  | 'location'
+  | 'salary';
 
 export type SortDirection = 'asc' | 'desc';
+
+export interface SortCriterion {
+  field: JobSortField;
+  dir: SortDirection;
+}
 
 export interface JobListQuery {
   limit?: number;
   offset?: number;
   sort?: JobSortField;
   sortDir?: SortDirection;
+  sorts?: SortCriterion[];
   salary_min?: number;
   salary_max?: number;
   organization?: string;
