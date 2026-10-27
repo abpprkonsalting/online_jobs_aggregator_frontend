@@ -158,7 +158,9 @@ const salaryRangeValidator: ValidatorFn = (control: AbstractControl): Validation
             } @else {
               <p-table
                 [value]="currentState.value.jobs"
+                [first]="currentState.value.offset"
                 [paginator]="true"
+                [paginatorPosition]="'both'"
                 [rows]="currentState.value.limit"
                 [totalRecords]="currentState.value.total"
                 [rowsPerPageOptions]="[10, 20, 50]"

@@ -17,7 +17,6 @@ import { AuthSessionService } from '../features/auth/data-access/auth-session.se
             Your workspace is ready. Continue to your authorized job search and account tools.
           </p>
           <a class="primary-action" routerLink="/jobs">Continue to jobs</a>
-          <a class="secondary-action" routerLink="/jobs/table-scratch">Preview jobs table</a>
         } @else {
           <h1 id="home-title">The right opportunity starts with the right access.</h1>
           <p class="intro">
@@ -104,30 +103,6 @@ import { AuthSessionService } from '../features/auth/data-access/auth-session.se
     }
 
     .primary-action:focus-visible {
-      outline: 3px solid var(--color-accent);
-      outline-offset: 3px;
-    }
-
-    .secondary-action {
-      display: inline-flex;
-      min-height: 3.2rem;
-      align-items: center;
-      justify-content: center;
-      padding: 0.75rem 1.25rem;
-      margin-left: 0.75rem;
-      border-radius: 0.7rem;
-      border: 1px solid var(--color-border);
-      background: transparent;
-      color: var(--color-ink);
-      font-weight: 700;
-      text-decoration: none;
-    }
-
-    .secondary-action:hover {
-      background: var(--color-subtle);
-    }
-
-    .secondary-action:focus-visible {
       outline: 3px solid var(--color-accent);
       outline-offset: 3px;
     }
