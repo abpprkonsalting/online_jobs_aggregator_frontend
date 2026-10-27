@@ -38,6 +38,15 @@ export class JobsApiService {
     if (query.organization !== undefined) {
       params = params.set('organization', query.organization);
     }
+    if (query.location !== undefined) {
+      params = params.set('location', query.location);
+    }
+    if (query.allow_remote !== undefined) {
+      params = params.set('allow_remote', query.allow_remote ? 'true' : 'false');
+    }
+    if (query.posted !== undefined) {
+      params = params.set('posted', query.posted);
+    }
 
     return this.api.get<JobListResponse>('/jobs', { params });
   }

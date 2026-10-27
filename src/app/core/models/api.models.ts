@@ -46,6 +46,9 @@ export interface JobListQuery {
   salary_min?: number;
   salary_max?: number;
   organization?: string;
+  location?: string;
+  allow_remote?: boolean;
+  posted?: string;
 }
 
 export interface JobSkill {
