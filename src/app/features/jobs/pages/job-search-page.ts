@@ -183,11 +183,14 @@ const salaryRangeValidator: ValidatorFn = (control: AbstractControl): Validation
                   </ng-template>
                   <ng-template pTemplate="body" let-job>
                     <tr [routerLink]="['/jobs', job.id]" class="job-row">
-                      <td>{{ job.title }}</td>
+                      <td class="title-cell">
+                        <span class="job-title">{{ job.title }}</span>
+                        <span class="job-description">{{ job.description_text }}</span>
+                      </td>
                       <td>{{ job.organization }}</td>
                       <td>{{ job.allow_remote === 1 ? 'Remote' : job.allow_remote === 0 ? 'On-site' : '-' }}</td>
                       <td>{{ formatSalary(job) }}</td>
-                      <td>{{ job.posted_at ?? job.date_posted ?? '-' }}</td>
+                      <td>{{ formatPostedDate(job) }}</td>
                     </tr>
                   </ng-template>
                   <ng-template pTemplate="emptymessage">
@@ -460,8 +463,53 @@ const salaryRangeValidator: ValidatorFn = (control: AbstractControl): Validation
 
     .job-row td {
       white-space: nowrap;
+      overflow: visible;
+      text-overflow: ellipsis;
+    }
+
+    .title-cell {
+      position: relative;
+    }
+
+    .job-title {
+      display: block;
+      font-weight: 700;
+      color: var(--color-ink);
+      white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      max-width: 100%;
+    }
+
+    .job-description {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      z-index: 10;
+      display: none;
+      min-width: 20rem;
+      max-width: 48rem;
+      max-height: 14rem;
+      padding: 0.75rem 1rem;
+      border: 1px solid var(--color-border);
+      border-radius: 0.6rem;
+      background: var(--color-surface);
+      color: var(--color-ink);
+      font-size: 0.85rem;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      overflow: hidden;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 6;
+      box-shadow: 1rem 1rem 1.5rem rgb(0 0 0 / 50%);
+    }
+
+    .title-cell:hover .job-description {
+      display: -webkit-box;
+      left: 25px;
+    top: 35px;
+    overflow-y: auto;
     }
 
     @keyframes spin {
@@ -505,6 +553,13 @@ export class JobSearchPage implements OnInit {
     if (job.salary_currency) parts.push(job.salary_currency);
     if (job.salary_unit) parts.push(`/ ${job.salary_unit}`);
     return parts.length > 0 ? parts.join(' ') : '-';
+  }
+
+  protected formatPostedDate(job: JobListItem): string {
+    const value = job.posted_at ?? job.date_posted;
+    if (!value) return '-';
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? '-' : date.toLocaleDateString(undefined, { dateStyle: 'medium' });
   }
 
   @HostListener('window:resize', ['$event'])
