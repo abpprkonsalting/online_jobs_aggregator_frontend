@@ -70,14 +70,12 @@ const salaryRangeValidator: ValidatorFn = (control: AbstractControl): Validation
           </div>
 
           <div class="filter-field">
-            <label for="is-remote">
-              <input
-                id="is-remote"
-                type="checkbox"
-                formControlName="isRemote"
-              />
-              Is remote
-            </label>
+            <label for="is-remote">Is remote</label>
+            <input
+              id="is-remote"
+              type="checkbox"
+              formControlName="isRemote"
+            />
           </div>
 
           <div class="filter-field salary-fields">
@@ -111,8 +109,10 @@ const salaryRangeValidator: ValidatorFn = (control: AbstractControl): Validation
             <p class="validation-message" role="alert">Minimum salary must not exceed maximum salary.</p>
           }
 
-          <button type="submit" class="apply-button">Apply filters</button>
-          <button type="button" class="clear-button" (click)="clearFilters()">Clear filters</button>
+          <div class="filter-field actions" style="display: flex;flex-direction:row;">
+            <button type="submit" class="apply-button">Apply filters</button>
+            <button type="button" class="clear-button" (click)="clearFilters()">Clear filters</button>
+          </div>
         </form>
 
         <section class="results-panel" aria-labelledby="results-title">
@@ -255,6 +255,7 @@ const salaryRangeValidator: ValidatorFn = (control: AbstractControl): Validation
       display: flex;
       gap: 0.75rem;
       align-items: flex-end;
+      justify-content: space-between;
       padding: 1rem;
       border: 1px solid var(--color-border);
       border-radius: 1rem;
@@ -266,6 +267,11 @@ const salaryRangeValidator: ValidatorFn = (control: AbstractControl): Validation
       flex-direction: column;
       gap: 0.35rem;
       min-width: 0;
+    }
+
+    .filter-field input[type="checkbox"] {
+      width: 1rem;
+      height: 1rem;
     }
 
     .salary-fields {
