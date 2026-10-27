@@ -19,6 +19,7 @@ const job: JobListItem = {
   job_url: 'https://example.com/jobs/1',
   description_text: null,
   allow_remote: 1,
+  location: 'Berlin, Germany',
   salary_min: '90000.00',
   salary_max: '120000.00',
   salary_currency: 'USD',
@@ -207,6 +208,69 @@ describe('JobSearchPage', () => {
     request.flush(listResponse([job]));
     pageHarness.detectChanges();
     expect(page.querySelector('table')).not.toBeNull();
+  });
+
+  it('renders the geographic location in the Location column', async () => {
+    const pageHarness = await createPage();
+    httpTesting.expectOne('/api/jobs').flush(listResponse([job]));
+    pageHarness.detectChanges();
+
+    const page = pageHarness.routeNativeElement as HTMLElement;
+    expect(page.querySelector('th')?.textContent).toContain('Location');
+    expect(page.querySelector('table')?.textContent).toContain('Berlin, Germany');
+  });
+
+  it('renders a dash when a job has no location', async () => {
+    const pageHarness = await createPage();
+    httpTesting.expectOne('/api/jobs').flush(listResponse([{ ...job, location: null }]));
+    pageHarness.detectChanges();
+
+    const page = pageHarness.routeNativeElement as HTMLElement;
+    expect(page.querySelector('table')?.textContent).toContain('-');
+  });
+
+  it('applies a trimmed location to the URL and API request', async () => {
+    const pageHarness = await createPage();
+    httpTesting.expectOne('/api/jobs').flush(listResponse([]));
+    pageHarness.detectChanges();
+
+    const page = pageHarness.routeNativeElement as HTMLElement;
+    const location = page.querySelector('#location') as HTMLInputElement;
+    location.value = '  Paris  ';
+    location.dispatchEvent(new Event('input', { bubbles: true }));
+    (page.querySelector('.apply-button') as HTMLButtonElement).click();
+    await pageHarness.fixture.whenStable();
+    pageHarness.detectChanges();
+
+    const request = httpTesting.expectOne((req) => req.url.startsWith('/api/jobs'));
+    expect(TestBed.inject(Router).url).toBe('/jobs?location=Paris&sort=posted_at&sortDir=desc');
+    expect(request.request.params.get('location')).toBe('Paris');
+    request.flush(listResponse([job]));
+    pageHarness.detectChanges();
+  });
+
+  it('restores location from route query parameters', async () => {
+    const pageHarness = await createPage('/jobs?location=Berlin');
+    const request = httpTesting.expectOne((req) => req.url.startsWith('/api/jobs'));
+    expect(request.request.params.get('location')).toBe('Berlin');
+    expect((pageHarness.routeNativeElement?.querySelector('#location') as HTMLInputElement).value)
+      .toBe('Berlin');
+    request.flush(listResponse([]));
+  });
+
+  it('clearing filters clears the location input and URL param', async () => {
+    const pageHarness = await createPage('/jobs?location=Berlin');
+    httpTesting.expectOne((req) => req.url.startsWith('/api/jobs')).flush(listResponse([]));
+    pageHarness.detectChanges();
+
+    const page = pageHarness.routeNativeElement as HTMLElement;
+    expect((page.querySelector('#location') as HTMLInputElement).value).toBe('Berlin');
+    (page.querySelector('.clear-button') as HTMLButtonElement).click();
+    await pageHarness.fixture.whenStable();
+    pageHarness.detectChanges();
+
+    expect((page.querySelector('#location') as HTMLInputElement).value).toBe('');
+    expect(TestBed.inject(Router).url).not.toContain('location=');
   });
 
   it('rejects an invalid salary range without sending a request', async () => {
