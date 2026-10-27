@@ -20,7 +20,6 @@ import {
   SortDirection,
 } from '../../../core/models/api.models';
 import { JobsApiService } from '../data-access/jobs-api.service';
-import { AuthSessionService } from '../../auth/data-access/auth-session.service';
 
 const JOB_SORT_FIELDS: ReadonlySet<string> = new Set([
   'posted_at',
@@ -45,20 +44,7 @@ const salaryRangeValidator: ValidatorFn = (control: AbstractControl): Validation
   selector: 'app-job-search-page',
   imports: [JobResultCard, ReactiveFormsModule],
   template: `
-    <section class="search-page" aria-labelledby="page-title">
-      <header class="page-header">
-        <p class="eyebrow">Job discovery</p>
-        <h1 id="page-title">Find your next opportunity</h1>
-        <p class="page-description">
-          Explore roles from across the web and find a position that fits your next move.
-        </p>
-        @if (authSession.isAuthenticated()) {
-          <p class="page-description personalization-note">
-            Jobs match any categories you follow. If you have no followed categories, all jobs are shown.
-          </p>
-        }
-      </header>
-
+    <section class="search-page">
       <div class="search-layout">
         <aside class="filters-panel" aria-labelledby="filters-title">
           <div class="panel-heading">
@@ -208,37 +194,6 @@ const salaryRangeValidator: ValidatorFn = (control: AbstractControl): Validation
     .search-page {
       width: 100%;
       min-width: 0;
-    }
-
-    .page-header {
-      max-width: 44rem;
-      margin-bottom: clamp(2.5rem, 6vw, 4rem);
-    }
-
-    .eyebrow {
-      margin: 0 0 0.85rem;
-      color: var(--color-accent-dark);
-      font-size: 0.78rem;
-      font-weight: 750;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-    }
-
-    h1 {
-      max-width: 13ch;
-      margin: 0;
-      font-size: clamp(2.5rem, 6vw, 4.5rem);
-      font-weight: 700;
-      letter-spacing: -0.065em;
-      line-height: 1.03;
-    }
-
-    .page-description {
-      max-width: 38rem;
-      margin: 1.25rem 0 0;
-      color: var(--color-muted);
-      font-size: clamp(1rem, 2vw, 1.15rem);
-      line-height: 1.7;
     }
 
     .search-layout {
@@ -503,7 +458,6 @@ const salaryRangeValidator: ValidatorFn = (control: AbstractControl): Validation
 })
 export class JobSearchPage implements OnInit {
   private readonly jobsApi = inject(JobsApiService);
-  protected readonly authSession = inject(AuthSessionService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);

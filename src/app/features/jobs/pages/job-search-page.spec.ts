@@ -71,7 +71,7 @@ describe('JobSearchPage', () => {
     httpTesting.expectOne('/api/jobs').flush(listResponse([]));
   });
 
-  it('explains followed-category matching to signed-in users', async () => {
+  it('does not render hero messages for signed-in users', async () => {
     TestBed.inject(AuthSessionService).setSession('access-token', {
       id: 'user-1',
       email: 'user@example.com',
@@ -79,18 +79,40 @@ describe('JobSearchPage', () => {
     });
     const pageHarness = await createPage();
     const page = pageHarness.routeNativeElement as HTMLElement;
-
-    expect(page.querySelector('.personalization-note')?.textContent)
-      .toContain('Jobs match any categories you follow');
-    expect(page.querySelector('.personalization-note')?.textContent)
-      .toContain('If you have no followed categories, all jobs are shown');
     httpTesting.expectOne('/api/jobs').flush(listResponse([]));
+
+    expect(page.textContent).not.toContain('Job discovery');
+    expect(page.textContent).not.toContain('Find your next opportunity');
+    expect(page.textContent).not.toContain('Explore roles from across the web');
+    expect(page.textContent).not.toContain('Jobs match any categories you follow');
+    expect(page.querySelector('.page-header')).toBeNull();
+    expect(page.querySelector('.personalization-note')).toBeNull();
   });
 
-  it('does not show personalization messaging to signed-out users', async () => {
+  it('does not render hero messages for signed-out users', async () => {
     const pageHarness = await createPage();
-    expect(pageHarness.routeNativeElement?.querySelector('.personalization-note')).toBeNull();
+    const page = pageHarness.routeNativeElement as HTMLElement;
     httpTesting.expectOne('/api/jobs').flush(listResponse([]));
+
+    expect(page.textContent).not.toContain('Job discovery');
+    expect(page.textContent).not.toContain('Find your next opportunity');
+    expect(page.textContent).not.toContain('Explore roles from across the web');
+    expect(page.textContent).not.toContain('Jobs match any categories you follow');
+    expect(page.querySelector('.page-header')).toBeNull();
+  });
+
+  it('still renders the results heading and result count', async () => {
+    const pageHarness = await createPage();
+    httpTesting.expectOne('/api/jobs').flush(listResponse([job]));
+    pageHarness.detectChanges();
+
+    const page = pageHarness.routeNativeElement as HTMLElement;
+    expect(page.querySelector('.results-heading')?.querySelector('.eyebrow')?.textContent)
+      .toContain('Opportunities');
+    expect(page.querySelector('#results-title')?.textContent).toContain('Search results');
+    expect(page.querySelector('.result-count')?.textContent?.replace(/\s+/g, ' ').trim())
+      .toBe('1 role');
+    expect(page.querySelector('[role="status"]')).toBeNull();
   });
 
   it('renders returned jobs and the result count', async () => {
