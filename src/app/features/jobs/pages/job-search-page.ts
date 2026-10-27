@@ -45,144 +45,141 @@ const salaryRangeValidator: ValidatorFn = (control: AbstractControl): Validation
   imports: [JobResultCard, ReactiveFormsModule],
   template: `
     <section class="search-page">
-      <div class="search-layout">
-        <aside class="filters-panel" aria-labelledby="filters-title">
-          <div class="panel-heading">
-            <h2 id="filters-title">Search filters</h2>
-          </div>
-          <p class="filters-description">
-            Filter by organization and salary. More options will be added as backend support is verified.
-          </p>
-          <form [formGroup]="filterForm" (ngSubmit)="applyFilters()">
-            <label for="sort-by">Sort by</label>
-            <select id="sort-by" formControlName="sort">
-              <option value="posted_at">Recently posted</option>
-              <option value="date_posted">Original posting date</option>
-              <option value="organization">Organization</option>
-            </select>
+      <form class="filters-bar" [formGroup]="filterForm" (ngSubmit)="applyFilters()">
+        <div class="filter-field">
+          <label for="sort-by">Sort by</label>
+          <select id="sort-by" formControlName="sort">
+            <option value="posted_at">Recently posted</option>
+            <option value="date_posted">Original posting date</option>
+            <option value="organization">Organization</option>
+          </select>
+        </div>
 
-            <label for="sort-direction">Direction</label>
-            <select id="sort-direction" formControlName="sortDir">
-              <option value="desc">Descending</option>
-              <option value="asc">Ascending</option>
-            </select>
+        <div class="filter-field">
+          <label for="sort-direction">Direction</label>
+          <select id="sort-direction" formControlName="sortDir">
+            <option value="desc">Descending</option>
+            <option value="asc">Ascending</option>
+          </select>
+        </div>
 
-            <label for="organization">Organization</label>
+        <div class="filter-field">
+          <label for="organization">Organization</label>
+          <input
+            id="organization"
+            type="search"
+            formControlName="organization"
+            autocomplete="organization"
+            placeholder="Company name"
+          />
+        </div>
+
+        <div class="filter-field salary-fields">
+          <div>
+            <label for="salary-min">Minimum salary</label>
             <input
-              id="organization"
-              type="search"
-              formControlName="organization"
-              autocomplete="organization"
-              placeholder="Company name"
+              id="salary-min"
+              type="number"
+              min="0"
+              step="any"
+              formControlName="salaryMin"
+              inputmode="decimal"
+              placeholder="Any"
             />
-
-            <div class="salary-fields">
-              <div>
-                <label for="salary-min">Minimum salary</label>
-                <input
-                  id="salary-min"
-                  type="number"
-                  min="0"
-                  step="any"
-                  formControlName="salaryMin"
-                  inputmode="decimal"
-                  placeholder="Any"
-                />
-              </div>
-              <div>
-                <label for="salary-max">Maximum salary</label>
-                <input
-                  id="salary-max"
-                  type="number"
-                  min="0"
-                  step="any"
-                  formControlName="salaryMax"
-                  inputmode="decimal"
-                  placeholder="Any"
-                />
-              </div>
-            </div>
-            @if (filterForm.hasError('salaryRange')) {
-              <p class="validation-message" role="alert">Minimum salary must not exceed maximum salary.</p>
-            }
-
-            <button type="submit" class="apply-button">Apply filters</button>
-            <button type="button" class="clear-button" (click)="clearFilters()">Clear filters</button>
-          </form>
-        </aside>
-
-        <section class="results-panel" aria-labelledby="results-title">
-          @let currentState = state();
-          <div class="panel-heading results-heading">
-            <div>
-              <p class="eyebrow">Opportunities</p>
-              <h2 id="results-title">Search results</h2>
-            </div>
-            @if (currentState.status === 'loaded') {
-              <span class="result-count">
-                {{ currentState.value.total }}
-                {{ currentState.value.total === 1 ? 'role' : 'roles' }}
-              </span>
-            }
           </div>
-          @switch (currentState.status) {
-            @case ('loading') {
-              <div class="empty-results" role="status" aria-live="polite">
-                <span class="loading-indicator" aria-hidden="true"></span>
-                <h3>Loading jobs</h3>
-                <p>We’re gathering the latest opportunities.</p>
+          <div>
+            <label for="salary-max">Maximum salary</label>
+            <input
+              id="salary-max"
+              type="number"
+              min="0"
+              step="any"
+              formControlName="salaryMax"
+              inputmode="decimal"
+              placeholder="Any"
+            />
+          </div>
+        </div>
+
+        @if (filterForm.hasError('salaryRange')) {
+          <p class="validation-message" role="alert">Minimum salary must not exceed maximum salary.</p>
+        }
+
+        <button type="submit" class="apply-button">Apply filters</button>
+        <button type="button" class="clear-button" (click)="clearFilters()">Clear filters</button>
+      </form>
+
+      <section class="results-panel" aria-labelledby="results-title">
+        @let currentState = state();
+        <div class="panel-heading results-heading">
+          <div>
+            <p class="eyebrow">Opportunities</p>
+            <h2 id="results-title">Search results</h2>
+          </div>
+          @if (currentState.status === 'loaded') {
+            <span class="result-count">
+              {{ currentState.value.total }}
+              {{ currentState.value.total === 1 ? 'role' : 'roles' }}
+            </span>
+          }
+        </div>
+        @switch (currentState.status) {
+          @case ('loading') {
+            <div class="empty-results" role="status" aria-live="polite">
+              <span class="loading-indicator" aria-hidden="true"></span>
+              <h3>Loading jobs</h3>
+              <p>We’re gathering the latest opportunities.</p>
+            </div>
+          }
+          @case ('error') {
+            <div class="empty-results" role="alert">
+              <span class="empty-icon error-icon" aria-hidden="true">!</span>
+              <h3>We couldn’t load jobs</h3>
+              <p>{{ currentState.error.message }}</p>
+              <button type="button" class="retry-button" (click)="loadJobs()">Try again</button>
+            </div>
+          }
+          @case ('loaded') {
+            @if (currentState.value.jobs.length === 0) {
+              <div class="empty-results" role="status">
+                <span class="empty-icon" aria-hidden="true">↗</span>
+                <h3>No jobs found</h3>
+                <p>There are no matching jobs right now. Please check back later.</p>
               </div>
-            }
-            @case ('error') {
-              <div class="empty-results" role="alert">
-                <span class="empty-icon error-icon" aria-hidden="true">!</span>
-                <h3>We couldn’t load jobs</h3>
-                <p>{{ currentState.error.message }}</p>
-                <button type="button" class="retry-button" (click)="loadJobs()">Try again</button>
+            } @else {
+              <div class="job-list" aria-label="Job results">
+                @for (job of currentState.value.jobs; track job.id) {
+                  <app-job-result-card [job]="job" />
+                }
               </div>
-            }
-            @case ('loaded') {
-              @if (currentState.value.jobs.length === 0) {
-                <div class="empty-results" role="status">
-                  <span class="empty-icon" aria-hidden="true">↗</span>
-                  <h3>No jobs found</h3>
-                  <p>There are no matching jobs right now. Please check back later.</p>
+              <nav class="pagination" aria-label="Job result pages">
+                <p class="pagination-summary" aria-live="polite">
+                  Showing {{ currentState.value.offset + 1 }}–{{ currentState.value.offset + currentState.value.jobs.length }}
+                  of {{ currentState.value.total }}
+                </p>
+                <div class="pagination-actions">
+                  <button
+                    type="button"
+                    class="clear-button"
+                    [disabled]="currentState.value.offset <= 0"
+                    (click)="changePage(currentState.value, -1)"
+                  >
+                    Previous
+                  </button>
+                  <button
+                    type="button"
+                    class="clear-button"
+                    [disabled]="!currentState.value.hasMore"
+                    (click)="changePage(currentState.value, 1)"
+                  >
+                    Next
+                  </button>
                 </div>
-              } @else {
-                <div class="job-list" aria-label="Job results">
-                  @for (job of currentState.value.jobs; track job.id) {
-                    <app-job-result-card [job]="job" />
-                  }
-                </div>
-                <nav class="pagination" aria-label="Job result pages">
-                  <p class="pagination-summary" aria-live="polite">
-                    Showing {{ currentState.value.offset + 1 }}–{{ currentState.value.offset + currentState.value.jobs.length }}
-                    of {{ currentState.value.total }}
-                  </p>
-                  <div class="pagination-actions">
-                    <button
-                      type="button"
-                      class="clear-button"
-                      [disabled]="currentState.value.offset <= 0"
-                      (click)="changePage(currentState.value, -1)"
-                    >
-                      Previous
-                    </button>
-                    <button
-                      type="button"
-                      class="clear-button"
-                      [disabled]="!currentState.value.hasMore"
-                      (click)="changePage(currentState.value, 1)"
-                    >
-                      Next
-                    </button>
-                  </div>
-                </nav>
-              }
+              </nav>
             }
           }
-        </section>
-      </div>
+        }
+      </section>
     </section>
   `,
   styles: `
@@ -196,24 +193,41 @@ const salaryRangeValidator: ValidatorFn = (control: AbstractControl): Validation
       min-width: 0;
     }
 
-    .search-layout {
-      display: grid;
-      min-width: 0;
-      grid-template-columns: minmax(14rem, 17rem) minmax(0, 1fr);
-      align-items: start;
-      gap: 1.25rem;
-    }
-
-    .filters-panel,
-    .results-panel {
-      min-width: 0;
+    .filters-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      align-items: flex-end;
+      padding: 1rem;
       border: 1px solid var(--color-border);
       border-radius: 1rem;
       background: var(--color-surface);
     }
 
-    .filters-panel {
-      padding: 1.25rem;
+    .filter-field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      min-width: 0;
+    }
+
+    .salary-fields {
+      flex-direction: row;
+      gap: 0.55rem;
+    }
+
+    .salary-fields > div {
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+      min-width: 0;
+    }
+
+    .filter-field label,
+    .salary-fields label {
+      color: var(--color-ink);
+      font-size: 0.8rem;
+      font-weight: 650;
     }
 
     .panel-heading {
@@ -231,28 +245,9 @@ const salaryRangeValidator: ValidatorFn = (control: AbstractControl): Validation
       letter-spacing: -0.025em;
     }
 
-
-
-    .filters-description {
-      margin: 0.8rem 0 1rem;
-      color: var(--color-muted);
-      font-size: 0.875rem;
-      line-height: 1.55;
-    }
-
-    form {
-      display: grid;
-      gap: 0.65rem;
-    }
-
-    label {
-      color: var(--color-ink);
-      font-size: 0.8rem;
-      font-weight: 650;
-    }
-
-    input,
-    select {
+    .filter-field input,
+    .filter-field select,
+    .salary-fields input {
       width: 100%;
       min-width: 0;
       min-height: 2.65rem;
@@ -262,19 +257,6 @@ const salaryRangeValidator: ValidatorFn = (control: AbstractControl): Validation
       background: var(--color-surface);
       color: var(--color-ink);
       font-size: 0.875rem;
-    }
-
-    .salary-fields {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 0.55rem;
-      margin-top: 0.35rem;
-    }
-
-    .salary-fields > div {
-      display: grid;
-      min-width: 0;
-      gap: 0.45rem;
     }
 
     .validation-message {
@@ -294,7 +276,6 @@ const salaryRangeValidator: ValidatorFn = (control: AbstractControl): Validation
     }
 
     .apply-button {
-      margin-top: 0.35rem;
       border: 0;
       background: var(--color-ink);
       color: #fff;
@@ -431,14 +412,31 @@ const salaryRangeValidator: ValidatorFn = (control: AbstractControl): Validation
     }
 
     @media (max-width: 760px) {
-      .search-layout {
-        grid-template-columns: minmax(0, 1fr);
+      .filters-bar {
+        flex-direction: column;
+        align-items: stretch;
       }
 
+      .filter-field {
+        width: 100%;
+      }
+
+      .salary-fields {
+        flex-direction: column;
+      }
+
+      .salary-fields > div {
+        width: 100%;
+      }
+
+      .apply-button,
+      .clear-button {
+        width: 100%;
+      }
     }
 
     @media (max-width: 420px) {
-      .filters-panel,
+      .filters-bar,
       .results-heading {
         padding: 1rem;
       }
