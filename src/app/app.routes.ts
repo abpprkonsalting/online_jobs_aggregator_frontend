@@ -3,8 +3,8 @@ import { authGuard } from './features/auth/guards/auth.guard';
 import { SignInPage } from './features/auth/pages/sign-in-page';
 import { JobDetailPage } from './features/jobs/pages/job-detail-page';
 import { JobSearchPage } from './features/jobs/pages/job-search-page';
+import { CategoriesPage } from './features/jobs/pages/categories-page';
 import { NotFoundPage } from './pages/not-found-page';
-import { PlaceholderPage } from './pages/placeholder-page';
 import { CategoryInterestsPage } from './features/auth/pages/category-interests-page';
 import { adminGuard } from './features/auth/guards/admin.guard';
 import { HomePage } from './pages/home-page';
@@ -66,11 +66,7 @@ export const routes: Routes = [
   {
     path: 'categories',
     canActivate: [authGuard],
-    component: PlaceholderPage,
-    data: {
-      title: 'Explore job categories',
-      description: 'Category browsing will be available in a future update.',
-    },
+    component: CategoriesPage,
   },
   {
     path: 'sign-in',
