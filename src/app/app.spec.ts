@@ -9,6 +9,7 @@ import { ApiClient } from './core/http/api-client';
 import { App } from './app';
 import { routes } from './app.routes';
 import { JobsApiService } from './features/jobs/data-access/jobs-api.service';
+import { ReferenceDataApiService } from './features/jobs/data-access/reference-data-api.service';
 import { AuthSessionService } from './features/auth/data-access/auth-session.service';
 import { AuthApiService } from './features/auth/data-access/auth-api.service';
 import { AuthUser } from './features/auth/models/auth.models';
@@ -62,6 +63,10 @@ describe('App', () => {
           useValue: {
             list: () => of({ jobs: [], total: 0, limit: 20, offset: 0, hasMore: false }),
           },
+        },
+        {
+          provide: ReferenceDataApiService,
+          useValue: { getCategories: () => of([]) },
         },
         {
           provide: AuthSessionService,
