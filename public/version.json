@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "releaseTag": null,
+  "buildStatus": "development",
+  "commitSha": "dev",
+  "buildTimestampUtc": "1970-01-01T00:00:00.000Z",
+  "environment": "development",
+  "deploymentId": null,
+  "artifactSha256": "dev"
+}
