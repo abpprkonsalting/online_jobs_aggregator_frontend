@@ -2,7 +2,7 @@ import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
-import { provideRouter, Router } from '@angular/router';
+import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { API_BASE_URL } from '../../../core/http/api-base-url';
 import { ApiClient } from '../../../core/http/api-client';
@@ -10,23 +10,6 @@ import { apiErrorInterceptor } from '../../../core/http/api-error.interceptor';
 import { JobListItem, JobListResponse } from '../../../core/models/api.models';
 import { AuthSessionService } from '../../auth/data-access/auth-session.service';
 import { JobSearchPage } from './job-search-page';
-
-const job: JobListItem = {
-  id: 'job-1',
-  source_id: 'source-1',
-  title: 'Frontend Engineer',
-  organization: 'Example Co',
-  job_url: 'https://example.com/jobs/1',
-  description_text: null,
-  allow_remote: 1,
-  location: 'Berlin, Germany',
-  salary_min: '90000.00',
-  salary_max: '120000.00',
-  salary_currency: 'USD',
-  salary_unit: 'year',
-  date_posted: null,
-  posted_at: '2026-10-20T12:00:00.000Z',
-};
 
 function listResponse(jobs: JobListItem[]): JobListResponse {
   return {
