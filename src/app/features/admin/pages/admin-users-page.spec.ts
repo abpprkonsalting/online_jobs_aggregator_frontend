@@ -27,6 +27,7 @@ describe('AdminUsersPage', () => {
   let harness: RouterTestingHarness;
 
   beforeEach(async () => {
+    TestBed.resetTestingModule();
     await TestBed.configureTestingModule({
       providers: [
         provideHttpClient(withInterceptors([authTokenInterceptor, apiErrorInterceptor])),

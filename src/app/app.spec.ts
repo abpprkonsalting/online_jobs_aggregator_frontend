@@ -23,6 +23,7 @@ describe('App', () => {
   let getFrontendVersion: ReturnType<typeof vi.fn>;
 
   beforeEach(async () => {
+    TestBed.resetTestingModule();
     const restoreError = signal<ApiError | null>(null);
     setRestoreError = (error) => restoreError.set(error);
     const isAuthenticated = signal(false);
