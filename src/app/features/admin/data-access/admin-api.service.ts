@@ -98,4 +98,12 @@ export class AdminApiService {
   listFetchRuns(): Observable<AdminFetchRun[]> {
     return this.api.get<AdminFetchRun[]>('/admin/fetch-runs');
   }
+
+  startFetchCycle(): Observable<{ status: string }> {
+    return this.api.post<{ status: string }>('/admin/fetch-cycles/start', {});
+  }
+
+  stopFetchCycle(): Observable<{ status: string }> {
+    return this.api.post<{ status: string }>('/admin/fetch-cycles/stop', {});
+  }
 }

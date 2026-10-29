@@ -28,7 +28,15 @@ import { AdminFetchRun } from '../models/admin.models';
       <section class="admin-panel" aria-labelledby="runs-title">
         <div class="section-heading">
           <h2 id="runs-title">Fetch runs</h2>
-          <button type="button" class="secondary-button" (click)="loadRuns()">Refresh</button>
+          <div class="run-actions">
+            <button type="button" class="secondary-button" (click)="startCycle()" [disabled]="starting()">
+              {{ starting() ? 'Starting…' : 'Start cycle' }}
+            </button>
+            <button type="button" class="secondary-button" (click)="stopCycle()" [disabled]="stopping()">
+              {{ stopping() ? 'Stopping…' : 'Stop cycle' }}
+            </button>
+            <button type="button" class="secondary-button" (click)="loadRuns()">Refresh</button>
+          </div>
         </div>
         @let runs = runsState();
         @switch (runs.status) {
@@ -100,6 +108,12 @@ import { AdminFetchRun } from '../models/admin.models';
             <p>Fetch history is not loaded.</p>
           }
         }
+        @if (cycleError(); as error) {
+          <p class="error-message" role="alert">{{ error }}</p>
+        }
+        @if (cycleMessage(); as message) {
+          <p class="success-message" role="status" aria-live="polite">{{ message }}</p>
+        }
       </section>
     </section>
   `,
@@ -141,7 +155,8 @@ import { AdminFetchRun } from '../models/admin.models';
       background: var(--color-surface);
     }
     h2 { margin: 0; font-size: 1.1rem; }
-    .section-heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
+    .section-heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; }
+    .run-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
     .secondary-button {
       min-height: 2.65rem;
       padding: 0.55rem 0.85rem;
@@ -154,6 +169,7 @@ import { AdminFetchRun } from '../models/admin.models';
       font-size: 0.85rem;
       font-weight: 650;
     }
+    .secondary-button:disabled { cursor: wait; opacity: 0.65; }
     .table-scroll { overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; text-align: left; }
     th, td { padding: 0.8rem 0.65rem; border-bottom: 1px solid var(--color-border); vertical-align: top; }
@@ -167,12 +183,18 @@ import { AdminFetchRun } from '../models/admin.models';
     .run-error { color: #9b321d; }
     .warning-list { margin: 0.35rem 0 0; padding-left: 1.25rem; color: #745000; }
     .empty-message { color: var(--color-muted); }
+    .error-message { margin: 0; color: #9b321d; font-size: 0.85rem; }
+    .success-message { color: #22623f; }
     @media (max-width: 600px) { .admin-panel { padding: 1rem; } }
   `,
 })
 export class AdminFetchRunsPage implements OnInit {
   private readonly adminApi = inject(AdminApiService);
   protected readonly runsState = signal<AsyncState<AdminFetchRun[]>>({ status: 'loading' });
+  protected readonly starting = signal(false);
+  protected readonly stopping = signal(false);
+  protected readonly cycleError = signal<string | null>(null);
+  protected readonly cycleMessage = signal<string | null>(null);
 
   ngOnInit(): void {
     this.loadRuns();
@@ -183,6 +205,40 @@ export class AdminFetchRunsPage implements OnInit {
     this.adminApi.listFetchRuns().subscribe({
       next: (runs) => this.runsState.set({ status: 'loaded', value: runs }),
       error: (error: ApiError) => this.runsState.set({ status: 'error', error }),
+    });
+  }
+
+  protected startCycle(): void {
+    this.starting.set(true);
+    this.cycleError.set(null);
+    this.cycleMessage.set(null);
+    this.adminApi.startFetchCycle().subscribe({
+      next: () => {
+        this.starting.set(false);
+        this.cycleMessage.set('Fetch cycle started.');
+        this.loadRuns();
+      },
+      error: (error: ApiError) => {
+        this.starting.set(false);
+        this.cycleError.set(error.message ?? 'Failed to start fetch cycle.');
+      },
+    });
+  }
+
+  protected stopCycle(): void {
+    this.stopping.set(true);
+    this.cycleError.set(null);
+    this.cycleMessage.set(null);
+    this.adminApi.stopFetchCycle().subscribe({
+      next: () => {
+        this.stopping.set(false);
+        this.cycleMessage.set('Fetch cycle stopped.');
+        this.loadRuns();
+      },
+      error: (error: ApiError) => {
+        this.stopping.set(false);
+        this.cycleError.set(error.message ?? 'Failed to stop fetch cycle.');
+      },
     });
   }
 }
