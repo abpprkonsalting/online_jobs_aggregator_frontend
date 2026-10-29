@@ -23,6 +23,7 @@ import {
   SortCriterion,
 } from '../../../core/models/api.models';
 import { JobsApiService } from '../data-access/jobs-api.service';
+import { JobResultCard } from '../components/job-result-card';
 
 const JOB_SORT_FIELDS: ReadonlySet<string> = new Set([
   'posted_at',
@@ -49,7 +50,7 @@ const salaryRangeValidator: ValidatorFn = (control: AbstractControl): Validation
 
 @Component({
   selector: 'app-job-search-page',
-  imports: [ReactiveFormsModule, TableModule, RouterLink],
+  imports: [ReactiveFormsModule, TableModule, RouterLink, JobResultCard],
   template: `
     <section class="search-page">
       @if (!isDesktop()) {
@@ -195,8 +196,10 @@ const salaryRangeValidator: ValidatorFn = (control: AbstractControl): Validation
                   <ng-template pTemplate="body" let-job>
                     <tr [routerLink]="['/jobs', job.id]" class="job-row">
                       <td class="title-cell">
-                        <span class="job-title">{{ job.title }}</span>
-                        <span class="job-description">{{ job.description_text }}</span>
+                        <app-job-result-card
+                          [job]="job"
+                          [isSaved]="savedJobIds().has(job.id)"
+                        />
                       </td>
                       <td>{{ job.organization }}</td>
                       <td>{{ job.location ?? '-' }}</td>
@@ -543,6 +546,7 @@ export class JobSearchPage implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private _sortChangeNavigating = false;
   protected readonly state = signal<AsyncState<JobListResponse>>({ status: 'loading' });
+  protected readonly savedJobIds = signal<Set<string>>(new Set());
   protected readonly filterForm = new FormGroup({
     organization: new FormControl('', { nonNullable: true }),
     location: new FormControl('', { nonNullable: true }),
