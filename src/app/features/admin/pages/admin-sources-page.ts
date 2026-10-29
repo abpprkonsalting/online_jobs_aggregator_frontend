@@ -153,6 +153,14 @@ function isConfigObject(value: unknown): value is Record<string, unknown> {
                             >
                               Delete
                             </button>
+                            <button
+                              type="button"
+                              class="secondary-button trigger-source"
+                              [disabled]="saving() || triggeringSourceId() === source.id"
+                              (click)="triggerSource(source)"
+                            >
+                              {{ triggeringSourceId() === source.id ? 'Triggering…' : 'Trigger now' }}
+                            </button>
                           </div>
                         </td>
                       </tr>
@@ -385,6 +393,7 @@ export class AdminSourcesPage implements OnInit {
   protected readonly sourcesState = signal<AsyncState<AdminSource[]>>({ status: 'loading' });
   protected readonly editingSource = signal<AdminSource | null>(null);
   protected readonly saving = signal(false);
+  protected readonly triggeringSourceId = signal<string | null>(null);
   protected readonly mutationError = signal<string | null>(null);
   protected readonly mutationMessage = signal<string | null>(null);
   protected readonly configError = signal<string | null>(null);
@@ -525,6 +534,29 @@ export class AdminSourcesPage implements OnInit {
           error instanceof Error
             ? error.message
             : 'An unexpected error occurred while deleting the source.',
+        );
+      },
+    });
+  }
+
+  protected triggerSource(source: AdminSource): void {
+    if (this.triggeringSourceId() === source.id) {
+      return;
+    }
+    this.triggeringSourceId.set(source.id);
+    this.mutationError.set(null);
+    this.adminApi.triggerSource(source.id).subscribe({
+      next: () => {
+        this.triggeringSourceId.set(null);
+        this.mutationMessage.set(`Triggered fetch for ${source.name}.`);
+        this.loadSources();
+      },
+      error: (error: unknown) => {
+        this.triggeringSourceId.set(null);
+        this.mutationError.set(
+          error instanceof Error
+            ? error.message
+            : `An unexpected error occurred while triggering fetch for ${source.name}.`,
         );
       },
     });

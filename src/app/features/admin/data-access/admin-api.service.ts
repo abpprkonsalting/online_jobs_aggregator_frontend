@@ -110,4 +110,8 @@ export class AdminApiService {
   stopFetchCycle(): Observable<{ status: string }> {
     return this.api.post<{ status: string }>('/admin/fetch-cycles/stop', {});
   }
+
+  triggerSource(sourceId: string): Observable<{ status: string }> {
+    return this.api.post<{ status: string }>(`/admin/sources/${encodeURIComponent(sourceId)}/trigger`, {});
+  }
 }
