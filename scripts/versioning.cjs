@@ -246,7 +246,8 @@ async function createApprovedTag(cwd, args) {
   const initialIndex = args.indexOf('--initial')
   const initialVersion = initialIndex >= 0 ? args[initialIndex + 1] : null
   const approveIndex = args.indexOf('--approve')
-  const approvedVersion = approveIndex >= 0 ? args[approveIndex + 1] : null
+  const approveColonArg = args.find((a) => a.startsWith('--approve:'))
+  const approvedVersion = approveIndex >= 0 ? args[approveIndex + 1] : approveColonArg ? approveColonArg.slice('--approve:'.length) : null
   const plan = planRelease(cwd)
   if (plan.dirty) throw new Error('Refusing to tag a dirty working tree. Commit or safely move all changes first.')
   printPlan(plan)
