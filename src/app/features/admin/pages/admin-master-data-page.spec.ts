@@ -70,6 +70,11 @@ describe('AdminMasterDataPage', () => {
   function flushInitialData(masterSchema = schema(), keywords: unknown[] = []): void {
     httpTesting.expectOne('/api/master/schema').flush(masterSchema);
     httpTesting.expectOne('/api/master/keywords').flush(keywords);
+    httpTesting.expectOne('/api/master/category-keywords').flush([]);
+    httpTesting.expectOne('/api/master/categories/category-1/subscribers').flush({
+      category_id: 'category-1',
+      subscriber_count: 0,
+    });
   }
 
   function enter(page: HTMLElement, selector: string, value: string): void {
@@ -94,6 +99,11 @@ describe('AdminMasterDataPage', () => {
         updated_at: '2026-10-20T12:00:00.000Z',
       },
     ]);
+    httpTesting.expectOne('/api/master/category-keywords').flush([]);
+    httpTesting.expectOne('/api/master/categories/category-1/subscribers').flush({
+      category_id: 'category-1',
+      subscriber_count: 0,
+    });
     pageHarness.detectChanges();
 
     const page = pageHarness.routeNativeElement as HTMLElement;
@@ -127,7 +137,16 @@ describe('AdminMasterDataPage', () => {
     const design = { id: 'category-2', name: 'Design', slug: 'design', description: 'Product design' };
     createCategory.flush(design, { status: 201, statusText: 'Created' });
     httpTesting.expectOne('/api/master/schema').flush(schema({ categories: [category, design] }));
+    httpTesting.expectOne('/api/master/categories/category-1/subscribers').flush({
+      category_id: 'category-1',
+      subscriber_count: 0,
+    });
+    httpTesting.expectOne('/api/master/categories/category-2/subscribers').flush({
+      category_id: 'category-2',
+      subscriber_count: 0,
+    });
     httpTesting.expectOne('/api/master/keywords').flush([]);
+    httpTesting.expectOne('/api/master/category-keywords').flush([]);
     pageHarness.detectChanges();
 
     enter(page, '#keyword-name', 'Figma');
@@ -154,12 +173,21 @@ describe('AdminMasterDataPage', () => {
     };
     createKeyword.flush(keyword, { status: 201, statusText: 'Created' });
     httpTesting.expectOne('/api/master/schema').flush(schema({ categories: [category, design] }));
+    httpTesting.expectOne('/api/master/categories/category-1/subscribers').flush({
+      category_id: 'category-1',
+      subscriber_count: 0,
+    });
+    httpTesting.expectOne('/api/master/categories/category-2/subscribers').flush({
+      category_id: 'category-2',
+      subscriber_count: 0,
+    });
     httpTesting.expectOne('/api/master/keywords').flush([{
       ...keyword,
       enabled: 1,
       created_at: '2026-10-20T12:00:00.000Z',
       updated_at: '2026-10-20T12:00:00.000Z',
     }]);
+    httpTesting.expectOne('/api/master/category-keywords').flush([]);
     pageHarness.detectChanges();
 
     const categorySelect = page.querySelector('#link-category') as HTMLSelectElement;
@@ -199,7 +227,12 @@ describe('AdminMasterDataPage', () => {
     expect(skillRequest.request.body).toEqual({ skills: [{ name: 'Go', slug: 'go' }] });
     skillRequest.flush({ seeded: 1 });
     httpTesting.expectOne('/api/master/schema').flush(schema({ countries: [], skills: [{ id: 'skill-2', name: 'Go', slug: 'go' }] }));
+    httpTesting.expectOne('/api/master/categories/category-1/subscribers').flush({
+      category_id: 'category-1',
+      subscriber_count: 0,
+    });
     httpTesting.expectOne('/api/master/keywords').flush([]);
+    httpTesting.expectOne('/api/master/category-keywords').flush([]);
     pageHarness.detectChanges();
 
     enter(page, '#country-name', 'Canada');
@@ -212,7 +245,12 @@ describe('AdminMasterDataPage', () => {
     countryRequest.flush({ seeded: 1 });
     const canada = { id: 'country-2', name: 'Canada', code: 'CA' };
     httpTesting.expectOne('/api/master/schema').flush(schema({ countries: [canada] }));
+    httpTesting.expectOne('/api/master/categories/category-1/subscribers').flush({
+      category_id: 'category-1',
+      subscriber_count: 0,
+    });
     httpTesting.expectOne('/api/master/keywords').flush([]);
+    httpTesting.expectOne('/api/master/category-keywords').flush([]);
     pageHarness.detectChanges();
 
     enter(page, '#city-name', 'Toronto');
@@ -229,7 +267,12 @@ describe('AdminMasterDataPage', () => {
       countries: [canada],
       cities: [{ id: 'city-2', country_id: canada.id, name: 'Toronto' }],
     }));
+    httpTesting.expectOne('/api/master/categories/category-1/subscribers').flush({
+      category_id: 'category-1',
+      subscriber_count: 0,
+    });
     httpTesting.expectOne('/api/master/keywords').flush([]);
+    httpTesting.expectOne('/api/master/category-keywords').flush([]);
     pageHarness.detectChanges();
 
     expect((pageHarness.routeNativeElement as HTMLElement).textContent).toContain('Toronto');
