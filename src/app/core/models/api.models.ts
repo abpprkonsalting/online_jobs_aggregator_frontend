@@ -108,6 +108,16 @@ export interface Country {
 
 export type SourceType = 'api' | 'scrape' | 'hybrid';
 
+export interface SavedJob {
+  id: string;
+  user_id: string;
+  job_id: string;
+  status: 'saved' | 'applied';
+  created_at: string;
+  updated_at: string;
+  job: JobListItem;
+}
+
 export type SourceWorkingMode = 'passive' | 'proactive' | 'both';
 
 export interface Source {

@@ -2,7 +2,7 @@ import { HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ApiClient } from '../../../core/http/api-client';
-import { JobDetail, JobListQuery, JobListResponse } from '../../../core/models/api.models';
+import { JobDetail, JobListQuery, JobListResponse, SavedJob } from '../../../core/models/api.models';
 
 @Injectable({ providedIn: 'root' })
 export class JobsApiService {
@@ -53,5 +53,21 @@ export class JobsApiService {
 
   getById(id: string): Observable<JobDetail> {
     return this.api.get<JobDetail>(`/jobs/${encodeURIComponent(id)}`);
+  }
+
+  listSavedJobs(): Observable<SavedJob[]> {
+    return this.api.get<SavedJob[]>('/users/me/saved-jobs');
+  }
+
+  saveJob(jobId: string, status: 'saved' | 'applied' = 'saved'): Observable<SavedJob> {
+    return this.api.post<SavedJob>('/users/me/saved-jobs', { job_id: jobId, status });
+  }
+
+  updateSavedJobStatus(jobId: string, status: 'saved' | 'applied'): Observable<SavedJob> {
+    return this.api.patch<SavedJob>(`/users/me/saved-jobs/${encodeURIComponent(jobId)}`, { status });
+  }
+
+  unsaveJob(jobId: string): Observable<{ success: boolean }> {
+    return this.api.delete<{ success: boolean }>(`/users/me/saved-jobs/${encodeURIComponent(jobId)}`);
   }
 }

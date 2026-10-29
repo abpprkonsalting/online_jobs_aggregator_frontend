@@ -62,6 +62,28 @@ import { JobsApiService } from '../data-access/jobs-api.service';
               >
                 View original posting
               </a>
+
+              @if (!isSaved()) {
+                <button
+                  type="button"
+                  class="save-button"
+                  (click)="toggleSave()"
+                >
+                  Save job
+                </button>
+              } @else {
+                <button
+                  type="button"
+                  class="save-button saved"
+                  (click)="toggleSave()"
+                >
+                  Saved — {{ savedStatus() }}
+                </button>
+              }
+
+              @if (saveError(); as error) {
+                <p class="save-error" role="alert">{{ error }}</p>
+              }
             </header>
 
             <div class="detail-content">
@@ -215,6 +237,41 @@ import { JobsApiService } from '../data-access/jobs-api.service';
       text-decoration: none;
     }
 
+    .save-button {
+      display: inline-flex;
+      min-height: 2.75rem;
+      align-items: center;
+      justify-content: center;
+      margin-top: 1.25rem;
+      padding: 0.6rem 1rem;
+      border: 0;
+      border-radius: 0.6rem;
+      background: var(--color-subtle);
+      color: var(--color-ink);
+      cursor: pointer;
+      font: inherit;
+      font-weight: 650;
+    }
+
+    .save-button:hover {
+      background: var(--color-border);
+    }
+
+    .save-button.saved {
+      background: var(--color-accent-dark);
+      color: #fff;
+    }
+
+    .save-button.saved:hover {
+      background: #1e5a43;
+    }
+
+    .save-error {
+      margin-top: 0.5rem;
+      color: #9b321d;
+      font-size: 0.8rem;
+    }
+
     .original-link:hover,
     .retry-button:hover {
       background: var(--color-accent-dark);
@@ -329,6 +386,9 @@ export class JobDetailPage implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   protected readonly state = signal<AsyncState<JobDetail>>({ status: 'loading' });
   private currentJobId: string | null = null;
+  protected readonly isSaved = signal<boolean>(false);
+  protected readonly savedStatus = signal<'saved' | 'applied'>('saved');
+  protected readonly saveError = signal<string | null>(null);
 
   protected readonly salaryLabel = computed(() => {
     const current = this.state();
@@ -404,9 +464,36 @@ export class JobDetailPage implements OnInit {
   private loadJob(id: string): void {
     this.state.set({ status: 'loading' });
     this.jobsApi.getById(id).subscribe({
-      next: (value) => this.state.set({ status: 'loaded', value }),
+      next: (value) => {
+        this.state.set({ status: 'loaded', value });
+      },
       error: (error: ApiError) => this.state.set({ status: 'error', error }),
     });
+  }
+
+  protected toggleSave(): void {
+    this.saveError.set(null);
+    if (this.isSaved()) {
+      this.jobsApi.unsaveJob(this.currentJobId!).subscribe({
+        next: () => {
+          this.isSaved.set(false);
+          this.saveError.set(null);
+        },
+        error: (error: ApiError) => {
+          this.saveError.set(error.message ?? 'Failed to unsave job.');
+        },
+      });
+    } else {
+      this.jobsApi.saveJob(this.currentJobId!, this.savedStatus()).subscribe({
+        next: () => {
+          this.isSaved.set(true);
+          this.saveError.set(null);
+        },
+        error: (error: ApiError) => {
+          this.saveError.set(error.message ?? 'Failed to save job.');
+        },
+      });
+    }
   }
 
   private formatAmount(value: string | null): string | null {

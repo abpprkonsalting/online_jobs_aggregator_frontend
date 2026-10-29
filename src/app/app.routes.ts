@@ -4,6 +4,7 @@ import { SignInPage } from './features/auth/pages/sign-in-page';
 import { JobDetailPage } from './features/jobs/pages/job-detail-page';
 import { JobSearchPage } from './features/jobs/pages/job-search-page';
 import { CategoriesPage } from './features/jobs/pages/categories-page';
+import { SavedJobsPage } from './features/jobs/pages/saved-jobs-page';
 import { NotFoundPage } from './pages/not-found-page';
 import { CategoryInterestsPage } from './features/auth/pages/category-interests-page';
 import { adminGuard } from './features/auth/guards/admin.guard';
@@ -31,6 +32,11 @@ export const routes: Routes = [
     path: 'account',
     canActivate: [authGuard],
     component: CategoryInterestsPage,
+  },
+  {
+    path: 'account/saved-jobs',
+    canActivate: [authGuard],
+    component: SavedJobsPage,
   },
   {
     path: 'admin',

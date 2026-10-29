@@ -1,6 +1,8 @@
-import { Component, computed, input } from '@angular/core';
+import { Component, computed, input, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { JobListItem } from '../../../core/models/api.models';
+import { JobsApiService } from '../data-access/jobs-api.service';
+import { ApiError } from '../../../core/http/api-error';
 
 @Component({
   selector: 'app-job-result-card',
@@ -14,6 +16,15 @@ import { JobListItem } from '../../../core/models/api.models';
               {{ job().title }}
             </a>
           </h2>
+          <button
+            type="button"
+            class="save-button"
+            [class.saved]="isSaved()"
+            [attr.aria-pressed]="isSaved()"
+            (click)="toggleSave()"
+          >
+            {{ isSaved() ? 'Saved' : 'Save job' }}
+          </button>
           @if (job().allow_remote === 1) {
             <span class="work-style">Remote</span>
           } @else if (job().allow_remote === 0) {
@@ -35,6 +46,10 @@ import { JobListItem } from '../../../core/models/api.models';
             <li><time [attr.datetime]="job().posted_at ?? job().date_posted">{{ postedDate }}</time></li>
           }
         </ul>
+
+        @if (saveError(); as error) {
+          <p class="save-error" role="alert">{{ error }}</p>
+        }
       </div>
     </article>
   `,
@@ -70,6 +85,7 @@ import { JobListItem } from '../../../core/models/api.models';
       align-items: flex-start;
       justify-content: space-between;
       gap: 0.75rem;
+      flex-wrap: wrap;
     }
 
     h2 {
@@ -91,6 +107,33 @@ import { JobListItem } from '../../../core/models/api.models';
       color: var(--color-accent-dark);
       text-decoration: underline;
       text-underline-offset: 0.2em;
+    }
+
+    .save-button {
+      flex: 0 0 auto;
+      min-height: 2.65rem;
+      padding: 0.55rem 0.85rem;
+      border-radius: 0.55rem;
+      border: 0;
+      background: var(--color-subtle);
+      color: var(--color-ink);
+      cursor: pointer;
+      font: inherit;
+      font-size: 0.85rem;
+      font-weight: 650;
+    }
+
+    .save-button:hover {
+      background: var(--color-border);
+    }
+
+    .save-button.saved {
+      background: var(--color-accent-dark);
+      color: #fff;
+    }
+
+    .save-button.saved:hover {
+      background: #1e5a43;
     }
 
     .work-style {
@@ -126,6 +169,12 @@ import { JobListItem } from '../../../core/models/api.models';
       content: "·";
     }
 
+    .save-error {
+      margin: 0.5rem 0 0;
+      color: #9b321d;
+      font-size: 0.8rem;
+    }
+
     @media (max-width: 420px) {
       .job-card {
         padding: 1rem;
@@ -142,6 +191,11 @@ import { JobListItem } from '../../../core/models/api.models';
 export class JobResultCard {
   readonly job = input.required<JobListItem>();
   readonly location = input<string | null>(null);
+  readonly isSaved = input<boolean>(false);
+  readonly savedStatus = input<'saved' | 'applied'>('saved');
+
+  private readonly jobsApi = inject(JobsApiService);
+  protected readonly saveError = signal<string | null>(null);
 
   protected readonly salaryLabel = computed(() => {
     const job = this.job();
@@ -174,6 +228,29 @@ export class JobResultCard {
       ? null
       : `Posted ${date.toLocaleDateString()}`;
   });
+
+  protected toggleSave(): void {
+    this.saveError.set(null);
+    if (this.isSaved()) {
+      this.jobsApi.unsaveJob(this.job().id).subscribe({
+        next: () => {
+          // Intentionally empty — card state is managed by parent
+        },
+        error: (error: ApiError) => {
+          this.saveError.set(error.message ?? 'Failed to unsave job.');
+        },
+      });
+    } else {
+      this.jobsApi.saveJob(this.job().id, this.savedStatus()).subscribe({
+        next: () => {
+          // Intentionally empty — card state is managed by parent
+        },
+        error: (error: ApiError) => {
+          this.saveError.set(error.message ?? 'Failed to save job.');
+        },
+      });
+    }
+  }
 
   private formatAmount(value: string | null): string | null {
     if (value === null || value.trim() === '') {
