@@ -14,6 +14,7 @@ import { AdminSourcesPage } from './features/admin/pages/admin-sources-page';
 import { AdminGeographicAreasPage } from './features/admin/pages/admin-geographic-areas-page';
 import { AdminSourceAreasPage } from './features/admin/pages/admin-source-areas-page';
 import { AdminFetchRunsPage } from './features/admin/pages/admin-fetch-runs-page';
+import { AdminFetchRunDetailPage } from './features/admin/pages/admin-fetch-run-detail-page';
 import { AdminMasterDataPage } from './features/admin/pages/admin-master-data-page';
 
 export const routes: Routes = [
@@ -63,6 +64,11 @@ export const routes: Routes = [
     path: 'admin/fetch-runs',
     canActivate: [adminGuard],
     component: AdminFetchRunsPage,
+  },
+  {
+    path: 'admin/fetch-runs/:id',
+    canActivate: [adminGuard],
+    component: AdminFetchRunDetailPage,
   },
   {
     path: 'admin/master-data',

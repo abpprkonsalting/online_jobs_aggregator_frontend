@@ -57,6 +57,7 @@ import { AdminFetchRun } from '../models/admin.models';
                 <table>
                   <thead>
                     <tr>
+                      <th scope="col">Run ID</th>
                       <th scope="col">Status</th>
                       <th scope="col">Source ID</th>
                       <th scope="col">Started</th>
@@ -70,6 +71,9 @@ import { AdminFetchRun } from '../models/admin.models';
                   <tbody>
                     @for (run of runs.value; track run.id) {
                       <tr>
+                        <td>
+                          <a [routerLink]="['/admin/fetch-runs', run.id]">{{ run.id }}</a>
+                        </td>
                         <td>
                           <span class="status-badge" [class.running]="run.status === 'running'"
                             [class.success]="run.status === 'success'" [class.failed]="run.status === 'failed'">

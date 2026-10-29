@@ -99,6 +99,10 @@ export class AdminApiService {
     return this.api.get<AdminFetchRun[]>('/admin/fetch-runs');
   }
 
+  getFetchRun(id: string): Observable<AdminFetchRun> {
+    return this.api.get<AdminFetchRun>(`/admin/fetch-runs/${encodeURIComponent(id)}`);
+  }
+
   startFetchCycle(): Observable<{ status: string }> {
     return this.api.post<{ status: string }>('/admin/fetch-cycles/start', {});
   }

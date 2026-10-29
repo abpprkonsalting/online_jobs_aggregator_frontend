@@ -136,7 +136,11 @@ describe('AdminFetchRunsPage', () => {
     expect((pageHarness.routeNativeElement as HTMLElement).querySelector('[role="alert"]')?.textContent)
       .toContain('Fetch history unavailable');
 
-    ((pageHarness.routeNativeElement as HTMLElement).querySelector('button') as HTMLButtonElement).click();
+    const buttons = Array.from(
+      (pageHarness.routeNativeElement as HTMLElement).querySelectorAll('button'),
+    );
+    const refreshButton = buttons.find((b) => b.textContent?.includes('Refresh'));
+    (refreshButton as HTMLButtonElement).click();
     httpTesting.expectOne('/api/admin/fetch-runs').flush([]);
     pageHarness.detectChanges();
     expect((pageHarness.routeNativeElement as HTMLElement).textContent)
