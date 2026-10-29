@@ -69,3 +69,16 @@ export interface CreateAdminCategoryKeywordResponse {
   weight?: number;
   enabled: boolean;
 }
+
+export interface CategoryKeywordLink {
+  category_id: string;
+  category_name: string;
+  category_slug: string;
+  keyword_id: string;
+  keyword_name: string;
+  keyword_slug: string;
+  weight: number | null;
+  enabled: number;
+  created_at: string;
+  updated_at: string;
+}

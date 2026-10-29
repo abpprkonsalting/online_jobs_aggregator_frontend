@@ -1,5 +1,5 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { Observable } from 'rxjs';
 import { ApiError } from '../../../core/http/api-error';
@@ -8,6 +8,7 @@ import { AdminMasterDataApiService } from '../data-access/admin-master-data-api.
 import {
   AdminKeyword,
   AdminMasterSchema,
+  CategoryKeywordLink,
   CreateAdminCategoryKeywordResponse,
 } from '../models/admin-master-data.models';
 
@@ -15,7 +16,7 @@ const slugValidator = Validators.pattern(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
 
 @Component({
   selector: 'app-admin-master-data-page',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, FormsModule, RouterLink],
   template: `
     <section class="admin-page" aria-labelledby="page-title">
       <header class="page-header">
@@ -181,24 +182,37 @@ const slugValidator = Validators.pattern(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
 
       <section class="admin-panel" aria-labelledby="category-keywords-title">
         <h2 id="category-keywords-title">Category-keyword links</h2>
-        <p class="panel-note">
-          The backend accepts link writes but does not currently provide a link-list endpoint. Successful writes are confirmed by the API response.
-        </p>
+
+        @let links = categoryKeywordLinksState();
         @let keywords = keywordsState();
-        @if (schema.status === 'loading' || keywords.status === 'loading') {
-          <p role="status">Loading categories and keywords…</p>
-        } @else if (schema.status === 'error' || keywords.status === 'error') {
+        @if (schema.status === 'loading' || keywords.status === 'loading' || links.status === 'loading') {
+          <p role="status">Loading categories, keywords, and links…</p>
+        } @else if (schema.status === 'error' || keywords.status === 'error' || links.status === 'error') {
           @if (schema.status === 'error') {
             <p role="alert">{{ schema.error.message }}</p>
           }
           @if (keywords.status === 'error') {
             <p role="alert">{{ keywords.error.message }}</p>
           }
+          @if (links.status === 'error') {
+            <p role="alert">{{ links.error.message }}</p>
+          }
           <button type="button" class="secondary-button" (click)="loadData()">Try again</button>
         } @else if (
-          schema.status === 'loaded' && schema.value.categories.length > 0
-          && keywords.status === 'loaded' && keywords.value.length > 0
+          schema.status === 'loaded'
+          && keywords.status === 'loaded'
+          && links.status === 'loaded'
         ) {
+          <div class="filter-row">
+            <label for="filter-category">Filter keywords by category</label>
+            <select id="filter-category" [(ngModel)]="selectedFilterCategoryId">
+              <option value="">All categories</option>
+              @for (category of schema.value.categories; track category.id) {
+                <option [value]="category.id">{{ category.name }}</option>
+              }
+            </select>
+          </div>
+
           <form [formGroup]="categoryKeywordForm" (ngSubmit)="createCategoryKeyword()">
             <div class="form-grid">
               <div class="field">
@@ -235,8 +249,44 @@ const slugValidator = Validators.pattern(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
             </div>
             <button type="submit" class="primary-button" [disabled]="saving()">Link keyword</button>
           </form>
+
+          <section class="admin-panel" aria-labelledby="associations-title">
+            <h3 id="associations-title">Existing associations</h3>
+            @if (links.status === 'loaded' && links.value.length === 0) {
+              <p class="empty-message">No category-keyword links defined yet.</p>
+            } @else if (links.status === 'loaded') {
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Category</th>
+                    <th scope="col">Keyword</th>
+                    <th scope="col">Weight</th>
+                    <th scope="col">Enabled</th>
+                    <th scope="col">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (link of filteredLinks(); track link.category_id + link.keyword_id) {
+                    <tr>
+                      <td>{{ link.category_name }}</td>
+                      <td>{{ link.keyword_name }}</td>
+                      <td>{{ link.weight ?? '-' }}</td>
+                      <td>
+                        <span class="status-badge" [class.enabled]="link.enabled === 1">{{ link.enabled === 1 ? 'Yes' : 'No' }}</span>
+                      </td>
+                      <td>
+                        <button type="button" class="remove-button" (click)="unlinkKeyword(link.category_id, link.keyword_id)">
+                          Unlink
+                        </button>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            }
+          </section>
         } @else {
-          <p class="empty-message">Add at least one category and one keyword before creating a link.</p>
+          <p class="empty-message">Add at least one category and one keyword before viewing associations.</p>
         }
       </section>
 
@@ -256,7 +306,7 @@ const slugValidator = Validators.pattern(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
             <div class="catalog-grid">
               <section>
                 <h3>Categories ({{ schema.value.categories.length }})</h3>
-                <ul>@for (item of schema.value.categories; track item.id) { <li>{{ item.name }} <span>({{ item.slug }})</span></li> }</ul>
+                <ul>@for (item of schema.value.categories; track item.id) { <li>{{ item.name }} <span>({{ item.slug }})</span> <span class="panel-note">({{ categorySubscribersState()[item.id] ?? 0 }} subscriber{{ categorySubscribersState()[item.id] !== 1 ? 's' : '' }})</span></li> }</ul>
               </section>
               <section>
                 <h3>Skills ({{ schema.value.skills.length }})</h3>
@@ -359,6 +409,36 @@ const slugValidator = Validators.pattern(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
     .panel-note { line-height: 1.5; }
     .field-error, .error-message { margin: 0; color: #9b321d; font-size: 0.85rem; }
     .success-message { color: #22623f; }
+    .filter-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+    .filter-row label {
+      margin: 0;
+      font-size: 0.85rem;
+      font-weight: 650;
+      color: var(--color-ink);
+    }
+    .filter-row select {
+      min-width: 14rem;
+    }
+    .status-badge.enabled { background: #e3f4e9; color: #22623f; }
+    .remove-button {
+      min-height: 2.65rem;
+      padding: 0.55rem 0.85rem;
+      border-radius: 0.55rem;
+      border: 0;
+      background: #fff0ec;
+      color: #9b321d;
+      cursor: pointer;
+      font: inherit;
+      font-size: 0.85rem;
+      font-weight: 650;
+    }
+    .remove-button:hover { background: #fee4df; }
     @media (max-width: 760px) { .form-grid, .catalog-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
     @media (max-width: 520px) { .form-grid, .catalog-grid { grid-template-columns: 1fr; } }
   `,
@@ -367,6 +447,9 @@ export class AdminMasterDataPage implements OnInit {
   private readonly adminMasterApi = inject(AdminMasterDataApiService);
   protected readonly schemaState = signal<AsyncState<AdminMasterSchema>>({ status: 'loading' });
   protected readonly keywordsState = signal<AsyncState<AdminKeyword[]>>({ status: 'loading' });
+  protected readonly categoryKeywordLinksState = signal<AsyncState<CategoryKeywordLink[]>>({ status: 'loading' });
+  protected readonly categorySubscribersState = signal<Record<string, number>>({});
+  protected readonly selectedFilterCategoryId = signal<string>('');
   protected readonly saving = signal(false);
   protected readonly mutationError = signal<string | null>(null);
   protected readonly mutationMessage = signal<string | null>(null);
@@ -406,13 +489,74 @@ export class AdminMasterDataPage implements OnInit {
   protected loadData(): void {
     this.schemaState.set({ status: 'loading' });
     this.keywordsState.set({ status: 'loading' });
+    this.categoryKeywordLinksState.set({ status: 'loading' });
     this.adminMasterApi.getSchema().subscribe({
-      next: (schema) => this.schemaState.set({ status: 'loaded', value: schema }),
+      next: (schema) => {
+        this.schemaState.set({ status: 'loaded', value: schema });
+        this.loadCategorySubscribers(schema.categories);
+      },
       error: (error: ApiError) => this.schemaState.set({ status: 'error', error }),
     });
     this.adminMasterApi.getKeywords().subscribe({
       next: (keywords) => this.keywordsState.set({ status: 'loaded', value: keywords }),
       error: (error: ApiError) => this.keywordsState.set({ status: 'error', error }),
+    });
+    this.adminMasterApi.listCategoryKeywords().subscribe({
+      next: (links) => this.categoryKeywordLinksState.set({ status: 'loaded', value: links }),
+      error: (error: ApiError) => this.categoryKeywordLinksState.set({ status: 'error', error }),
+    });
+  }
+
+  protected loadCategorySubscribers(categories: { id: string; name: string }[]): void {
+    const counts: Record<string, number> = {};
+    let pending = categories.length;
+    if (pending === 0) {
+      this.categorySubscribersState.set(counts);
+      return;
+    }
+    for (const category of categories) {
+      this.adminMasterApi.getCategorySubscribers(category.id).subscribe({
+        next: (result) => {
+          counts[result.category_id] = result.subscriber_count;
+          pending -= 1;
+          if (pending === 0) {
+            this.categorySubscribersState.set(counts);
+          }
+        },
+        error: () => {
+          counts[category.id] = 0;
+          pending -= 1;
+          if (pending === 0) {
+            this.categorySubscribersState.set(counts);
+          }
+        },
+      });
+    }
+  }
+
+  protected readonly filteredLinks = computed(() => {
+    const links = this.categoryKeywordLinksState();
+    if (links.status !== 'loaded') return [];
+    const filterId = this.selectedFilterCategoryId();
+    if (!filterId) return links.value;
+    return links.value.filter((link) => link.category_id === filterId);
+  });
+
+  protected unlinkKeyword(categoryId: string, keywordId: string): void {
+    this.adminMasterApi.deleteCategoryKeyword(categoryId, keywordId).subscribe({
+      next: () => {
+        this.categoryKeywordLinksState.update((state) => {
+          if (state.status !== 'loaded') return state;
+          return {
+            status: 'loaded',
+            value: state.value.filter((l) => !(l.category_id === categoryId && l.keyword_id === keywordId)),
+          };
+        });
+        this.mutationMessage.set('Keyword unlinked from category.');
+      },
+      error: (error: ApiError) => {
+        this.mutationError.set(error.message ?? 'Failed to unlink keyword.');
+      },
     });
   }
 
