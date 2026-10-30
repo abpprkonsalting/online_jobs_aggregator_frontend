@@ -68,6 +68,7 @@ const integerZoomValidator: ValidatorFn = (control: AbstractControl): Validation
           <p class="success-message" role="status" aria-live="polite">{{ message }}</p>
         }
         <div class="map-tools">
+          <!-- Temporarily commented out until a geocoding provider is configured.
           <div class="address-form">
             <label for="area-address">Find an address</label>
             <div class="address-row">
@@ -76,6 +77,7 @@ const integerZoomValidator: ValidatorFn = (control: AbstractControl): Validation
             </div>
           </div>
           @if (geocodeError(); as error) { <p class="error-message" role="alert">{{ error }}</p> }
+          -->
           @if (drawError(); as error) { <p class="error-message" role="alert">{{ error }}</p> }
           <app-geographic-area-map (polygonDrawn)="convertPolygon($event)" />
           <button type="button" class="secondary-button" [disabled]="converting()" (click)="finishDrawing()">{{ converting() ? 'Converting…' : 'Use polygon' }}</button>
@@ -276,9 +278,11 @@ const integerZoomValidator: ValidatorFn = (control: AbstractControl): Validation
     h2 { margin: 0; font-size: 1.1rem; }
     form { display: grid; gap: 1rem; margin-top: 1rem; }
     .map-tools { display: grid; gap: 0.75rem; margin: 1rem 0 1.5rem; }
+    /* Temporarily commented with the address search UI until a geocoder is configured.
     .address-form { display: grid; gap: 0.45rem; margin: 0; }
     .address-row { display: flex; gap: 0.5rem; }
     .address-row input { flex: 1; }
+    */
     .bounds-result { margin: 0; color: var(--color-accent-dark); font-weight: 650; }
     .form-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.85rem; }
     .field { display: grid; align-content: start; gap: 0.45rem; }
