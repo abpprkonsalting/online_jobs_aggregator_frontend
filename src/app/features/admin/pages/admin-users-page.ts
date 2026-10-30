@@ -1,6 +1,7 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { FormatDatePipe } from '../../../core/pipes/format-date.pipe';
 import { ApiError } from '../../../core/http/api-error';
 import { AsyncState } from '../../../core/models/async-state';
 import { AdminApiService } from '../data-access/admin-api.service';
@@ -8,7 +9,7 @@ import { AdminUser } from '../models/admin.models';
 
 @Component({
   selector: 'app-admin-users-page',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, FormatDatePipe],
   template: `
     <section class="admin-page" aria-labelledby="page-title">
       <header class="page-header">
@@ -117,8 +118,8 @@ import { AdminUser } from '../models/admin.models';
                         <td>{{ user.email }}</td>
                         <td>{{ user.role === 'admin' ? 'Administrator' : 'User' }}</td>
                         <td>{{ user.is_active ? 'Active' : 'Inactive' }}</td>
-                        <td>{{ user.last_login_at ?? 'Never' }}</td>
-                        <td>{{ user.created_at }}</td>
+                        <td>{{ (user.last_login_at | formatDate:true) ?? 'Never' }}</td>
+                        <td>{{ user.created_at | formatDate }}</td>
                         <td>
                           <div class="row-actions">
                             <button

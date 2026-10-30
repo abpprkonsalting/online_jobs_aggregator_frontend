@@ -1,6 +1,7 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { JsonPipe } from '@angular/common';
+import { FormatDatePipe } from '../../../core/pipes/format-date.pipe';
 import { ApiError } from '../../../core/http/api-error';
 import { AsyncState } from '../../../core/models/async-state';
 import { AdminApiService } from '../data-access/admin-api.service';
@@ -8,7 +9,7 @@ import { AdminFetchRun } from '../models/admin.models';
 
 @Component({
   selector: 'app-admin-fetch-run-detail-page',
-  imports: [RouterLink, JsonPipe],
+  imports: [RouterLink, JsonPipe, FormatDatePipe],
   template: `
     <section class="admin-page" aria-labelledby="page-title">
       <header class="page-header">
@@ -58,11 +59,11 @@ import { AdminFetchRun } from '../models/admin.models';
               </div>
               <div class="meta-row">
                 <dt>Started</dt>
-                <dd>{{ run.value.started_at }}</dd>
+                <dd>{{ (run.value.started_at | formatDate:true) }}</dd>
               </div>
               <div class="meta-row">
                 <dt>Finished</dt>
-                <dd>{{ run.value.finished_at ?? 'In progress' }}</dd>
+                <dd>{{ (run.value.finished_at | formatDate:true) ?? 'In progress' }}</dd>
               </div>
               <div class="meta-row">
                 <dt>Jobs found</dt>

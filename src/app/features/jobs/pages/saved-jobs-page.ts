@@ -1,14 +1,14 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { DatePipe } from '@angular/common';
 import { ApiError } from '../../../core/http/api-error';
 import { AsyncState } from '../../../core/models/async-state';
 import { SavedJob } from '../../../core/models/api.models';
 import { JobsApiService } from '../data-access/jobs-api.service';
+import { formatDate } from '../../../core/utils/date.util';
 
 @Component({
   selector: 'app-saved-jobs-page',
-  imports: [RouterLink, DatePipe],
+  imports: [RouterLink],
   template: `
     <section class="saved-jobs-page" aria-labelledby="page-title">
       <header class="page-header">
@@ -64,7 +64,7 @@ import { JobsApiService } from '../data-access/jobs-api.service';
                           {{ item.status }}
                         </span>
                       </td>
-                      <td>{{ item.created_at | date:'mediumDate' }}</td>
+                      <td>{{ formatDate(item.created_at) ?? '-' }}</td>
                       <td class="actions-cell">
                         <button
                           type="button"
@@ -291,6 +291,7 @@ import { JobsApiService } from '../data-access/jobs-api.service';
 export class SavedJobsPage implements OnInit {
   private readonly jobsApi = inject(JobsApiService);
   protected readonly savedJobsState = signal<AsyncState<SavedJob[]>>({ status: 'loading' });
+  protected readonly formatDate = formatDate;
 
   ngOnInit(): void {
     this.loadSavedJobs();

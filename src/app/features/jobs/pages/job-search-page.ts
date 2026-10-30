@@ -24,6 +24,7 @@ import {
 } from '../../../core/models/api.models';
 import { JobsApiService } from '../data-access/jobs-api.service';
 import { JobResultCard } from '../components/job-result-card';
+import { formatDate } from '../../../core/utils/date.util';
 
 const JOB_SORT_FIELDS: ReadonlySet<string> = new Set([
   'posted_at',
@@ -574,8 +575,7 @@ export class JobSearchPage implements OnInit {
   protected formatPostedDate(job: JobListItem): string {
     const value = job.posted_at ?? job.date_posted;
     if (!value) return '-';
-    const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? '-' : date.toLocaleDateString(undefined, { dateStyle: 'medium' });
+    return formatDate(value) ?? '-';
   }
 
   @HostListener('window:resize', ['$event'])

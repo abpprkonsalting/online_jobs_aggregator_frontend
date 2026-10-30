@@ -1,6 +1,7 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { FormatDatePipe } from '../../../core/pipes/format-date.pipe';
 import { ApiError } from '../../../core/http/api-error';
 import { AsyncState } from '../../../core/models/async-state';
 import { SourceType, SourceWorkingMode } from '../../../core/models/api.models';
@@ -13,7 +14,7 @@ function isConfigObject(value: unknown): value is Record<string, unknown> {
 
 @Component({
   selector: 'app-admin-sources-page',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, FormatDatePipe],
   template: `
     <section class="admin-page" aria-labelledby="page-title">
       <header class="page-header">
@@ -134,7 +135,7 @@ function isConfigObject(value: unknown): value is Record<string, unknown> {
                         <td>{{ source.type }}</td>
                         <td>{{ source.working_mode }}</td>
                         <td>{{ source.enabled ? 'Enabled' : 'Disabled' }}</td>
-                        <td>{{ source.last_run_at ?? 'Never' }}</td>
+                        <td>{{ (source.last_run_at | formatDate:true) ?? 'Never' }}</td>
                         <td>
                           <div class="row-actions">
                             <button
