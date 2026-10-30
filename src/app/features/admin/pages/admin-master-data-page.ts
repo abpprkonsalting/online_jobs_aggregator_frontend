@@ -22,7 +22,7 @@ const slugValidator = Validators.pattern(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
       <header class="page-header">
         <p class="eyebrow">Administration</p>
         <h1 id="page-title">Master data</h1>
-        <p>Manage the supported categories, skills, locations, keywords, and category-keyword links.</p>
+        <p>Manage reference values used across job search and classification.</p>
       </header>
 
       <nav class="admin-navigation" aria-label="Administrator sections">
@@ -34,6 +34,14 @@ const slugValidator = Validators.pattern(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
         <a routerLink="/admin/master-data" aria-current="page">Master data</a>
       </nav>
 
+      <nav class="data-tabs" aria-label="Master data sections">
+        <button type="button" [attr.aria-pressed]="activeSection() === 'categories'" [class.selected]="activeSection() === 'categories'" (click)="setSection('categories')">Categories</button>
+        <button type="button" [attr.aria-pressed]="activeSection() === 'skills'" [class.selected]="activeSection() === 'skills'" (click)="setSection('skills')">Skills</button>
+        <button type="button" [attr.aria-pressed]="activeSection() === 'locations'" [class.selected]="activeSection() === 'locations'" (click)="setSection('locations')">Locations</button>
+        <button type="button" [attr.aria-pressed]="activeSection() === 'keywords'" [class.selected]="activeSection() === 'keywords'" (click)="setSection('keywords')">Keywords</button>
+        <button type="button" [attr.aria-pressed]="activeSection() === 'associations'" [class.selected]="activeSection() === 'associations'" (click)="setSection('associations')">Category-keyword links</button>
+      </nav>
+
       @if (mutationError(); as error) {
         <p class="error-message" role="alert">{{ error }}</p>
       }
@@ -41,303 +49,107 @@ const slugValidator = Validators.pattern(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
         <p class="success-message" role="status" aria-live="polite">{{ message }}</p>
       }
 
-      <section class="admin-panel" aria-labelledby="categories-title">
-        <h2 id="categories-title">Categories</h2>
-        <form [formGroup]="categoryForm" (ngSubmit)="createCategory()">
-          <div class="form-grid">
-            <div class="field">
-              <label for="category-name">Name</label>
-              <input id="category-name" type="text" formControlName="name" />
-              @if (categoryForm.controls.name.touched && categoryForm.controls.name.hasError('required')) {
-                <p class="field-error">Enter a category name.</p>
-              }
-            </div>
-            <div class="field">
-              <label for="category-slug">Slug</label>
-              <input id="category-slug" type="text" formControlName="slug" />
-              @if (categoryForm.controls.slug.touched && categoryForm.controls.slug.invalid) {
-                <p class="field-error">Use lowercase letters, numbers, and hyphens.</p>
-              }
-            </div>
-            <div class="field">
-              <label for="category-description">Description (optional)</label>
-              <input id="category-description" type="text" formControlName="description" />
-            </div>
-          </div>
-          <button type="submit" class="primary-button" [disabled]="saving()">Add category</button>
-        </form>
-      </section>
-
-      <section class="admin-panel" aria-labelledby="skills-title">
-        <h2 id="skills-title">Skills</h2>
-        <form [formGroup]="skillForm" (ngSubmit)="seedSkill()">
-          <div class="form-grid">
-            <div class="field">
-              <label for="skill-name">Name</label>
-              <input id="skill-name" type="text" formControlName="name" />
-              @if (skillForm.controls.name.touched && skillForm.controls.name.hasError('required')) {
-                <p class="field-error">Enter a skill name.</p>
-              }
-            </div>
-            <div class="field">
-              <label for="skill-slug">Slug</label>
-              <input id="skill-slug" type="text" formControlName="slug" />
-              @if (skillForm.controls.slug.touched && skillForm.controls.slug.invalid) {
-                <p class="field-error">Use lowercase letters, numbers, and hyphens.</p>
-              }
-            </div>
-          </div>
-          <button type="submit" class="primary-button" [disabled]="saving()">Add skill</button>
-        </form>
-      </section>
-
-      <section class="admin-panel" aria-labelledby="countries-title">
-        <h2 id="countries-title">Countries</h2>
-        <form [formGroup]="countryForm" (ngSubmit)="seedCountry()">
-          <div class="form-grid">
-            <div class="field">
-              <label for="country-name">Name</label>
-              <input id="country-name" type="text" formControlName="name" />
-              @if (countryForm.controls.name.touched && countryForm.controls.name.hasError('required')) {
-                <p class="field-error">Enter a country name.</p>
-              }
-            </div>
-            <div class="field">
-              <label for="country-code">Code (optional)</label>
-              <input id="country-code" type="text" formControlName="code" maxlength="10" />
-            </div>
-          </div>
-          <button type="submit" class="primary-button" [disabled]="saving()">Add country</button>
-        </form>
-      </section>
-
-      <section class="admin-panel" aria-labelledby="cities-title">
-        <h2 id="cities-title">Cities</h2>
-        @let schema = schemaState();
-        @if (schema.status === 'loaded' && schema.value.countries.length === 0) {
-          <p class="empty-message">Add a country before adding a city.</p>
-        } @else {
-          <form [formGroup]="cityForm" (ngSubmit)="seedCity()">
-            <div class="form-grid">
-              <div class="field">
-                <label for="city-name">Name</label>
-                <input id="city-name" type="text" formControlName="name" />
-                @if (cityForm.controls.name.touched && cityForm.controls.name.hasError('required')) {
-                  <p class="field-error">Enter a city name.</p>
-                }
-              </div>
-              <div class="field">
-                <label for="city-country">Country</label>
-                <select id="city-country" formControlName="countryId">
-                  <option value="">Select a country</option>
-                  @if (schema.status === 'loaded') {
-                    @for (country of schema.value.countries; track country.id) {
-                      <option [value]="country.id">{{ country.name }}</option>
-                    }
-                  }
-                </select>
-                @if (cityForm.controls.countryId.touched && cityForm.controls.countryId.hasError('required')) {
-                  <p class="field-error">Select a country.</p>
-                }
-              </div>
-            </div>
-            <button type="submit" class="primary-button" [disabled]="saving()">Add city</button>
-          </form>
-        }
-      </section>
-
-      <section class="admin-panel" aria-labelledby="keywords-title">
-        <h2 id="keywords-title">Keywords</h2>
-        <form [formGroup]="keywordForm" (ngSubmit)="createKeyword()">
-          <div class="form-grid">
-            <div class="field">
-              <label for="keyword-name">Name</label>
-              <input id="keyword-name" type="text" formControlName="name" />
-              @if (keywordForm.controls.name.touched && keywordForm.controls.name.hasError('required')) {
-                <p class="field-error">Enter a keyword name.</p>
-              }
-            </div>
-            <div class="field">
-              <label for="keyword-slug">Slug</label>
-              <input id="keyword-slug" type="text" formControlName="slug" />
-              @if (keywordForm.controls.slug.touched && keywordForm.controls.slug.invalid) {
-                <p class="field-error">Use lowercase letters, numbers, and hyphens.</p>
-              }
-            </div>
-            <div class="field">
-              <label for="keyword-category">Optional default category</label>
-              <select id="keyword-category" formControlName="categoryId">
-                <option value="">No default category</option>
-                @if (schema.status === 'loaded') {
-                  @for (category of schema.value.categories; track category.id) {
-                    <option [value]="category.id">{{ category.name }}</option>
-                  }
-                }
-                </select>
-            </div>
-          </div>
-          <button type="submit" class="primary-button" [disabled]="saving()">Add keyword</button>
-        </form>
-      </section>
-
-      <section class="admin-panel" aria-labelledby="category-keywords-title">
-        <h2 id="category-keywords-title">Category-keyword links</h2>
-
-        @let links = categoryKeywordLinksState();
-        @let keywords = keywordsState();
-        @if (schema.status === 'loading' || keywords.status === 'loading' || links.status === 'loading') {
-          <p role="status">Loading categories, keywords, and links…</p>
-        } @else if (schema.status === 'error' || keywords.status === 'error' || links.status === 'error') {
-          @if (schema.status === 'error') {
-            <p role="alert">{{ schema.error.message }}</p>
-          }
-          @if (keywords.status === 'error') {
-            <p role="alert">{{ keywords.error.message }}</p>
-          }
-          @if (links.status === 'error') {
-            <p role="alert">{{ links.error.message }}</p>
-          }
+      @let schema = schemaState();
+      @let keywords = keywordsState();
+      @let links = categoryKeywordLinksState();
+      @if (schema.status === 'loading') {
+        <section class="admin-panel" role="status" aria-live="polite">Loading master data…</section>
+      } @else if (schema.status === 'error') {
+        <section class="admin-panel" role="alert">
+          <p>{{ schema.error.message }}</p>
           <button type="button" class="secondary-button" (click)="loadData()">Try again</button>
-        } @else if (
-          schema.status === 'loaded'
-          && keywords.status === 'loaded'
-          && links.status === 'loaded'
-        ) {
-          <div class="filter-row">
-            <label for="filter-category">Filter keywords by category</label>
-            <select id="filter-category" [(ngModel)]="selectedFilterCategoryId">
-              <option value="">All categories</option>
-              @for (category of schema.value.categories; track category.id) {
-                <option [value]="category.id">{{ category.name }}</option>
-              }
-            </select>
-          </div>
-
-          <form [formGroup]="categoryKeywordForm" (ngSubmit)="createCategoryKeyword()">
-            <div class="form-grid">
-              <div class="field">
-                <label for="link-category">Category</label>
-                <select id="link-category" formControlName="categoryId">
-                  <option value="">Select a category</option>
-                  @for (category of schema.value.categories; track category.id) {
-                    <option [value]="category.id">{{ category.name }}</option>
-                  }
-                </select>
-                @if (categoryKeywordForm.controls.categoryId.touched && categoryKeywordForm.controls.categoryId.hasError('required')) {
-                  <p class="field-error">Select a category.</p>
+        </section>
+      } @else if (schema.status === 'loaded') {
+        @switch (activeSection()) {
+          @case ('categories') {
+            <div class="section-layout">
+              <section class="admin-panel" aria-labelledby="categories-form-title">
+                <h2 id="categories-form-title">Add category</h2>
+                <form [formGroup]="categoryForm" (ngSubmit)="createCategory()">
+                  <div class="form-grid">
+                    <div class="field"><label for="category-name">Name</label><input id="category-name" type="text" formControlName="name" />
+                      @if (categoryForm.controls.name.touched && categoryForm.controls.name.hasError('required')) { <p class="field-error">Enter a category name.</p> }
+                    </div>
+                    <div class="field"><label for="category-slug">Slug</label><input id="category-slug" type="text" formControlName="slug" />
+                      @if (categoryForm.controls.slug.touched && categoryForm.controls.slug.invalid) { <p class="field-error">Use lowercase letters, numbers, and hyphens.</p> }
+                    </div>
+                    <div class="field"><label for="category-description">Description (optional)</label><input id="category-description" type="text" formControlName="description" /></div>
+                  </div>
+                  <button type="submit" class="primary-button" [disabled]="saving()">Add category</button>
+                </form>
+              </section>
+              <section class="admin-panel" aria-labelledby="categories-title">
+                <div class="section-heading"><div><h2 id="categories-title">Categories</h2><p class="panel-note">{{ schema.value.categories.length }} records</p></div><button type="button" class="secondary-button" (click)="loadData()">Refresh</button></div>
+                @if (schema.value.categories.length === 0) { <p class="empty-message">No categories have been added.</p> } @else {
+                  <table><thead><tr><th scope="col">Name</th><th scope="col">Slug</th><th scope="col">Description</th><th scope="col">Subscribers</th></tr></thead><tbody>
+                    @for (item of schema.value.categories; track item.id) { <tr><td>{{ item.name }}</td><td><code>{{ item.slug }}</code></td><td>{{ item.description || '—' }}</td><td>{{ categorySubscribersState()[item.id] ?? '—' }}</td></tr> }
+                  </tbody></table>
                 }
-              </div>
-              <div class="field">
-                <label for="link-keyword">Keyword</label>
-                <select id="link-keyword" formControlName="keywordId">
-                  <option value="">Select a keyword</option>
-                  @for (keyword of keywords.value; track keyword.id) {
-                    <option [value]="keyword.id">{{ keyword.name }}</option>
-                  }
-                </select>
-                @if (categoryKeywordForm.controls.keywordId.touched && categoryKeywordForm.controls.keywordId.hasError('required')) {
-                  <p class="field-error">Select a keyword.</p>
-                }
-              </div>
-              <div class="field">
-                <label for="link-weight">Weight (optional)</label>
-                <input id="link-weight" type="number" min="0" max="1" step="0.01" formControlName="weight" />
-                @if (categoryKeywordForm.controls.weight.touched && categoryKeywordForm.controls.weight.invalid) {
-                  <p class="field-error">Weight must be between 0 and 1.</p>
-                }
-              </div>
-            </div>
-            <button type="submit" class="primary-button" [disabled]="saving()">Link keyword</button>
-          </form>
-
-          <section class="admin-panel" aria-labelledby="associations-title">
-            <h3 id="associations-title">Existing associations</h3>
-            @if (links.status === 'loaded' && links.value.length === 0) {
-              <p class="empty-message">No category-keyword links defined yet.</p>
-            } @else if (links.status === 'loaded') {
-              <table>
-                <thead>
-                  <tr>
-                    <th scope="col">Category</th>
-                    <th scope="col">Keyword</th>
-                    <th scope="col">Weight</th>
-                    <th scope="col">Enabled</th>
-                    <th scope="col">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (link of filteredLinks(); track link.category_id + link.keyword_id) {
-                    <tr>
-                      <td>{{ link.category_name }}</td>
-                      <td>{{ link.keyword_name }}</td>
-                      <td>{{ link.weight ?? '-' }}</td>
-                      <td>
-                        <span class="status-badge" [class.enabled]="link.enabled === 1">{{ link.enabled === 1 ? 'Yes' : 'No' }}</span>
-                      </td>
-                      <td>
-                        <button type="button" class="remove-button" (click)="unlinkKeyword(link.category_id, link.keyword_id)">
-                          Unlink
-                        </button>
-                      </td>
-                    </tr>
-                  }
-                </tbody>
-              </table>
-            }
-          </section>
-        } @else {
-          <p class="empty-message">Add at least one category and one keyword before viewing associations.</p>
-        }
-      </section>
-
-      <section class="admin-panel" aria-labelledby="catalog-title">
-        <div class="section-heading">
-          <h2 id="catalog-title">Current master data</h2>
-          <button type="button" class="secondary-button" (click)="loadData()">Refresh</button>
-        </div>
-        @switch (schema.status) {
-          @case ('loading') {
-            <p role="status" aria-live="polite">Loading master data…</p>
-          }
-          @case ('error') {
-            <p role="alert">{{ schema.error.message }}</p>
-          }
-          @case ('loaded') {
-            <div class="catalog-grid">
-              <section>
-                <h3>Categories ({{ schema.value.categories.length }})</h3>
-                <ul>@for (item of schema.value.categories; track item.id) { <li>{{ item.name }} <span>({{ item.slug }})</span> <span class="panel-note">({{ categorySubscribersState()[item.id] ?? 0 }} subscriber{{ categorySubscribersState()[item.id] !== 1 ? 's' : '' }})</span></li> }</ul>
               </section>
-              <section>
-                <h3>Skills ({{ schema.value.skills.length }})</h3>
-                <ul>@for (item of schema.value.skills; track item.id) { <li>{{ item.name }} <span>({{ item.slug }})</span></li> }</ul>
-              </section>
-              <section>
-                <h3>Countries ({{ schema.value.countries.length }})</h3>
-                <ul>@for (item of schema.value.countries; track item.id) { <li>{{ item.name }}@if (item.code) { <span> ({{ item.code }})</span> }</li> }</ul>
-              </section>
-              <section>
-                <h3>Cities ({{ schema.value.cities.length }})</h3>
-                <ul>@for (item of schema.value.cities; track item.id) { <li>{{ item.name }}</li> }</ul>
-              </section>
-              @if (keywords.status === 'loaded') {
-                <section>
-                  <h3>Keywords ({{ keywords.value.length }})</h3>
-                  <ul>@for (item of keywords.value; track item.id) { <li>{{ item.name }} <span>({{ item.slug }})</span></li> }</ul>
-                </section>
-              } @else if (keywords.status === 'error') {
-                <section role="alert">
-                  <h3>Keywords could not be loaded</h3>
-                  <p>{{ keywords.error.message }}</p>
-                </section>
-              }
             </div>
           }
-          @case ('idle') {
-            <p>Master data is not loaded.</p>
+          @case ('skills') {
+            <div class="section-layout">
+              <section class="admin-panel" aria-labelledby="skills-form-title"><h2 id="skills-form-title">Add skill</h2>
+                <form [formGroup]="skillForm" (ngSubmit)="seedSkill()"><div class="form-grid">
+                  <div class="field"><label for="skill-name">Name</label><input id="skill-name" type="text" formControlName="name" />@if (skillForm.controls.name.touched && skillForm.controls.name.hasError('required')) { <p class="field-error">Enter a skill name.</p> }</div>
+                  <div class="field"><label for="skill-slug">Slug</label><input id="skill-slug" type="text" formControlName="slug" />@if (skillForm.controls.slug.touched && skillForm.controls.slug.invalid) { <p class="field-error">Use lowercase letters, numbers, and hyphens.</p> }</div>
+                </div><button type="submit" class="primary-button" [disabled]="saving()">Add skill</button></form>
+              </section>
+              <section class="admin-panel" aria-labelledby="skills-title"><div class="section-heading"><div><h2 id="skills-title">Skills</h2><p class="panel-note">{{ schema.value.skills.length }} records</p></div><button type="button" class="secondary-button" (click)="loadData()">Refresh</button></div>
+                @if (schema.value.skills.length === 0) { <p class="empty-message">No skills have been added.</p> } @else { <table><thead><tr><th scope="col">Name</th><th scope="col">Slug</th></tr></thead><tbody>@for (item of schema.value.skills; track item.id) { <tr><td>{{ item.name }}</td><td><code>{{ item.slug }}</code></td></tr> }</tbody></table> }
+              </section>
+            </div>
+          }
+          @case ('locations') {
+            <div class="section-layout location-layout">
+              <section class="admin-panel" aria-labelledby="countries-form-title"><h2 id="countries-form-title">Add country</h2><form [formGroup]="countryForm" (ngSubmit)="seedCountry()"><div class="form-grid">
+                <div class="field"><label for="country-name">Name</label><input id="country-name" type="text" formControlName="name" />@if (countryForm.controls.name.touched && countryForm.controls.name.hasError('required')) { <p class="field-error">Enter a country name.</p> }</div>
+                <div class="field"><label for="country-code">Code (optional)</label><input id="country-code" type="text" formControlName="code" maxlength="10" /></div>
+              </div><button type="submit" class="primary-button" [disabled]="saving()">Add country</button></form></section>
+              <section class="admin-panel" aria-labelledby="countries-title"><div class="section-heading"><div><h2 id="countries-title">Countries</h2><p class="panel-note">{{ schema.value.countries.length }} records</p></div></div>
+                @if (schema.value.countries.length === 0) { <p class="empty-message">No countries have been added.</p> } @else { <table><thead><tr><th scope="col">Name</th><th scope="col">Code</th></tr></thead><tbody>@for (item of schema.value.countries; track item.id) { <tr><td>{{ item.name }}</td><td>{{ item.code || '—' }}</td></tr> }</tbody></table> }
+              </section>
+              <section class="admin-panel" aria-labelledby="cities-form-title"><h2 id="cities-form-title">Add city</h2>
+                @if (schema.value.countries.length === 0) { <p class="empty-message">Add a country before adding a city.</p> } @else {
+                  <form [formGroup]="cityForm" (ngSubmit)="seedCity()"><div class="form-grid"><div class="field"><label for="city-name">Name</label><input id="city-name" type="text" formControlName="name" />@if (cityForm.controls.name.touched && cityForm.controls.name.hasError('required')) { <p class="field-error">Enter a city name.</p> }</div>
+                    <div class="field"><label for="city-country">Country</label><select id="city-country" formControlName="countryId"><option value="">Select a country</option>@for (country of schema.value.countries; track country.id) { <option [value]="country.id">{{ country.name }}</option> }</select>@if (cityForm.controls.countryId.touched && cityForm.controls.countryId.hasError('required')) { <p class="field-error">Select a country.</p> }</div></div><button type="submit" class="primary-button" [disabled]="saving()">Add city</button></form>
+                }
+              </section>
+              <section class="admin-panel" aria-labelledby="cities-title"><div class="section-heading"><div><h2 id="cities-title">Cities</h2><p class="panel-note">{{ schema.value.cities.length }} records</p></div></div>
+                @if (schema.value.cities.length === 0) { <p class="empty-message">No cities have been added.</p> } @else { <table><thead><tr><th scope="col">City</th><th scope="col">Country</th></tr></thead><tbody>@for (item of schema.value.cities; track item.id) { <tr><td>{{ item.name }}</td><td>{{ countryName(schema.value.countries, item.country_id) }}</td></tr> }</tbody></table> }
+              </section>
+            </div>
+          }
+          @case ('keywords') {
+            <div class="section-layout">
+              <section class="admin-panel" aria-labelledby="keywords-form-title"><h2 id="keywords-form-title">Add keyword</h2><form [formGroup]="keywordForm" (ngSubmit)="createKeyword()"><div class="form-grid">
+                <div class="field"><label for="keyword-name">Name</label><input id="keyword-name" type="text" formControlName="name" />@if (keywordForm.controls.name.touched && keywordForm.controls.name.hasError('required')) { <p class="field-error">Enter a keyword name.</p> }</div>
+                <div class="field"><label for="keyword-slug">Slug</label><input id="keyword-slug" type="text" formControlName="slug" />@if (keywordForm.controls.slug.touched && keywordForm.controls.slug.invalid) { <p class="field-error">Use lowercase letters, numbers, and hyphens.</p> }</div>
+                <div class="field"><label for="keyword-category">Optional default category</label><select id="keyword-category" formControlName="categoryId"><option value="">No default category</option>@for (category of schema.value.categories; track category.id) { <option [value]="category.id">{{ category.name }}</option> }</select></div>
+              </div><button type="submit" class="primary-button" [disabled]="saving()">Add keyword</button></form></section>
+              @if (keywords.status === 'loading') { <section class="admin-panel" role="status">Loading keywords…</section> }
+              @else if (keywords.status === 'error') { <section class="admin-panel" role="alert"><p>{{ keywords.error.message }}</p><button type="button" class="secondary-button" (click)="loadData()">Try again</button></section> }
+              @else if (keywords.status === 'loaded') { <section class="admin-panel" aria-labelledby="keywords-title"><div class="section-heading"><div><h2 id="keywords-title">Keywords</h2><p class="panel-note">{{ keywords.value.length }} records</p></div></div>
+                @if (keywords.value.length === 0) { <p class="empty-message">No keywords have been added.</p> } @else { <table><thead><tr><th scope="col">Name</th><th scope="col">Slug</th><th scope="col">Default category</th><th scope="col">Status</th></tr></thead><tbody>@for (item of keywords.value; track item.id) { <tr><td>{{ item.name }}</td><td><code>{{ item.slug }}</code></td><td>{{ categoryName(schema.value.categories, item.category_id) }}</td><td>{{ item.enabled ? 'Enabled' : 'Disabled' }}</td></tr> }</tbody></table> }
+              </section> }
+            </div>
+          }
+          @case ('associations') {
+            <section class="admin-panel" aria-labelledby="associations-title"><div class="section-heading"><div><h2 id="associations-title">Category-keyword links</h2><p class="panel-note">Connect keywords to the categories used to classify jobs.</p></div></div>
+              @if (keywords.status === 'loading' || links.status === 'loading') { <p role="status">Loading keywords and links…</p> }
+              @else if (keywords.status === 'error' || links.status === 'error') { @if (keywords.status === 'error') { <p role="alert">{{ keywords.error.message }}</p> } @if (links.status === 'error') { <p role="alert">{{ links.error.message }}</p> } <button type="button" class="secondary-button" (click)="loadData()">Try again</button> }
+              @else if (keywords.status === 'loaded' && links.status === 'loaded') {
+                <form class="association-form" [formGroup]="categoryKeywordForm" (ngSubmit)="createCategoryKeyword()"><div class="form-grid"><div class="field"><label for="link-category">Category</label><select id="link-category" formControlName="categoryId"><option value="">Select a category</option>@for (category of schema.value.categories; track category.id) { <option [value]="category.id">{{ category.name }}</option> }</select>@if (categoryKeywordForm.controls.categoryId.touched && categoryKeywordForm.controls.categoryId.hasError('required')) { <p class="field-error">Select a category.</p> }</div>
+                  <div class="field"><label for="link-keyword">Keyword</label><select id="link-keyword" formControlName="keywordId"><option value="">Select a keyword</option>@for (keyword of keywords.value; track keyword.id) { <option [value]="keyword.id">{{ keyword.name }}</option> }</select>@if (categoryKeywordForm.controls.keywordId.touched && categoryKeywordForm.controls.keywordId.hasError('required')) { <p class="field-error">Select a keyword.</p> }</div>
+                  <div class="field"><label for="link-weight">Weight (optional)</label><input id="link-weight" type="number" min="0" max="1" step="0.01" formControlName="weight" />@if (categoryKeywordForm.controls.weight.touched && categoryKeywordForm.controls.weight.invalid) { <p class="field-error">Weight must be between 0 and 1.</p> }</div></div><button type="submit" class="primary-button" [disabled]="saving()">Link keyword</button></form>
+                <div class="section-heading association-filter"><label for="filter-category">Filter by category</label><select id="filter-category" [(ngModel)]="selectedFilterCategoryId"><option value="">All categories</option>@for (category of schema.value.categories; track category.id) { <option [value]="category.id">{{ category.name }}</option> }</select></div>
+                @if (filteredLinks().length === 0) { <p class="empty-message">No category-keyword links match this view.</p> } @else { <table><thead><tr><th scope="col">Category</th><th scope="col">Keyword</th><th scope="col">Weight</th><th scope="col">Status</th><th scope="col">Action</th></tr></thead><tbody>@for (link of filteredLinks(); track link.category_id + link.keyword_id) { <tr><td>{{ link.category_name }}</td><td>{{ link.keyword_name }}</td><td>{{ link.weight ?? '—' }}</td><td>{{ link.enabled === 1 ? 'Enabled' : 'Disabled' }}</td><td><button type="button" class="remove-button" (click)="unlinkKeyword(link.category_id, link.keyword_id)">Unlink</button></td></tr> }</tbody></table> }
+              }
+            </section>
           }
         }
-      </section>
+      }
     </section>
   `,
   styles: `
@@ -401,31 +213,10 @@ const slugValidator = Validators.pattern(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
     .secondary-button { border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-ink); }
     .primary-button:disabled { cursor: wait; opacity: 0.65; }
     .section-heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
-    .catalog-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.25rem; }
-    .catalog-grid section { min-width: 0; }
-    .catalog-grid ul { margin: 0.5rem 0 0; padding-left: 1.2rem; }
-    .catalog-grid li { overflow-wrap: anywhere; }
-    .catalog-grid span, .panel-note, .empty-message { color: var(--color-muted); }
+    .panel-note, .empty-message { color: var(--color-muted); }
     .panel-note { line-height: 1.5; }
     .field-error, .error-message { margin: 0; color: #9b321d; font-size: 0.85rem; }
     .success-message { color: #22623f; }
-    .filter-row {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      margin-bottom: 1rem;
-      flex-wrap: wrap;
-    }
-    .filter-row label {
-      margin: 0;
-      font-size: 0.85rem;
-      font-weight: 650;
-      color: var(--color-ink);
-    }
-    .filter-row select {
-      min-width: 14rem;
-    }
-    .status-badge.enabled { background: #e3f4e9; color: #22623f; }
     .remove-button {
       min-height: 2.65rem;
       padding: 0.55rem 0.85rem;
@@ -439,8 +230,20 @@ const slugValidator = Validators.pattern(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
       font-weight: 650;
     }
     .remove-button:hover { background: #fee4df; }
-    @media (max-width: 760px) { .form-grid, .catalog-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-    @media (max-width: 520px) { .form-grid, .catalog-grid { grid-template-columns: 1fr; } }
+    .data-tabs { display: flex; gap: 0.35rem; border-bottom: 1px solid var(--color-border); }
+    .data-tabs button { min-height: 2.8rem; padding: 0.65rem 1rem; border: 0; border-bottom: 3px solid transparent; background: transparent; color: var(--color-muted); cursor: pointer; font: inherit; font-weight: 650; }
+    .data-tabs button.selected { border-bottom-color: var(--color-accent); color: var(--color-ink); }
+    .section-layout { display: grid; grid-template-columns: minmax(19rem, 0.8fr) minmax(38rem, 1.7fr); align-items: start; gap: 1.25rem; }
+    .location-layout { grid-template-columns: repeat(2, minmax(28rem, 1fr)); }
+    table { width: 100%; border-collapse: collapse; text-align: left; }
+    th, td { padding: 0.8rem 0.75rem; border-bottom: 1px solid var(--color-border); vertical-align: top; }
+    th { color: var(--color-muted); font-size: 0.8rem; font-weight: 700; }
+    td { font-size: 0.9rem; }
+    code { color: var(--color-muted); font-size: 0.85rem; }
+    .panel-note { margin: 0.35rem 0 0; color: var(--color-muted); font-size: 0.85rem; }
+    .association-form { max-width: 70rem; margin-bottom: 1.5rem; }
+    .association-filter { justify-content: flex-start; margin-block: 1.25rem 0.5rem; }
+    .association-filter select { min-width: 18rem; min-height: 2.6rem; padding: 0.5rem 0.7rem; border: 1px solid var(--color-border); border-radius: 0.55rem; background: var(--color-surface); color: var(--color-ink); font: inherit; }
   `,
 })
 export class AdminMasterDataPage implements OnInit {
@@ -450,6 +253,7 @@ export class AdminMasterDataPage implements OnInit {
   protected readonly categoryKeywordLinksState = signal<AsyncState<CategoryKeywordLink[]>>({ status: 'loading' });
   protected readonly categorySubscribersState = signal<Record<string, number>>({});
   protected readonly selectedFilterCategoryId = signal<string>('');
+  protected readonly activeSection = signal<'categories' | 'skills' | 'locations' | 'keywords' | 'associations'>('categories');
   protected readonly saving = signal(false);
   protected readonly mutationError = signal<string | null>(null);
   protected readonly mutationMessage = signal<string | null>(null);
@@ -484,6 +288,21 @@ export class AdminMasterDataPage implements OnInit {
 
   ngOnInit(): void {
     this.loadData();
+  }
+
+  protected setSection(section: 'categories' | 'skills' | 'locations' | 'keywords' | 'associations'): void {
+    this.activeSection.set(section);
+    this.mutationError.set(null);
+    this.mutationMessage.set(null);
+  }
+
+  protected countryName(countries: AdminMasterSchema['countries'], countryId: string): string {
+    return countries.find((country) => country.id === countryId)?.name ?? 'Unknown country';
+  }
+
+  protected categoryName(categories: AdminMasterSchema['categories'], categoryId: string | null): string {
+    if (!categoryId) return '—';
+    return categories.find((category) => category.id === categoryId)?.name ?? 'Unknown category';
   }
 
   protected loadData(): void {
