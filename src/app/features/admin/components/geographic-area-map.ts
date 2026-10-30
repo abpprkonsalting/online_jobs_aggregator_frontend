@@ -34,6 +34,7 @@ export class GeographicAreaMap implements AfterViewInit, OnDestroy {
   private polygon?: Polygon;
   private points: LatLng[] = [];
   private L?: typeof import('leaflet');
+  private pendingBounds: { bbox: [number, number, number, number]; zoom: number } | null = null;
 
   async ngAfterViewInit(): Promise<void> {
     this.L = resolveLeafletApi(await import('leaflet'));
@@ -45,6 +46,7 @@ export class GeographicAreaMap implements AfterViewInit, OnDestroy {
     }).addTo(this.map);
     this.map.on('click', (event) => this.addPoint(event.latlng));
     this.map.on('dblclick', () => this.finishDrawing());
+    this.renderPendingBounds();
     setTimeout(() => this.map?.invalidateSize(), 0);
   }
 
@@ -62,6 +64,21 @@ export class GeographicAreaMap implements AfterViewInit, OnDestroy {
     this.polygonDrawn.emit(polygon);
   }
 
+  showBounds(bbox: [number, number, number, number], zoom: number): void {
+    this.points = [];
+    this.polygon?.remove();
+    this.polygon = undefined;
+    this.pendingBounds = { bbox, zoom };
+    this.renderPendingBounds();
+  }
+
+  clearArea(): void {
+    this.pendingBounds = null;
+    this.points = [];
+    this.polygon?.remove();
+    this.polygon = undefined;
+  }
+
   ngOnDestroy(): void {
     this.map?.remove();
   }
@@ -71,5 +88,21 @@ export class GeographicAreaMap implements AfterViewInit, OnDestroy {
     this.points.push(point);
     this.polygon?.remove();
     this.polygon = this.L.polygon(this.points, { color: '#146c63', fillOpacity: 0.2 }).addTo(this.map);
+  }
+
+  private renderPendingBounds(): void {
+    if (!this.L || !this.map || !this.pendingBounds) return;
+    const [minLongitude, minLatitude, maxLongitude, maxLatitude] = this.pendingBounds.bbox;
+    const corners: [number, number][] = [
+      [minLatitude, minLongitude],
+      [minLatitude, maxLongitude],
+      [maxLatitude, maxLongitude],
+      [maxLatitude, minLongitude],
+    ];
+    this.polygon = this.L.polygon(corners, { color: '#146c63', fillOpacity: 0.2 }).addTo(this.map);
+    this.map.setView(
+      [(minLatitude + maxLatitude) / 2, (minLongitude + maxLongitude) / 2],
+      this.pendingBounds.zoom,
+    );
   }
 }

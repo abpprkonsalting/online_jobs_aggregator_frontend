@@ -80,7 +80,10 @@ const integerZoomValidator: ValidatorFn = (control: AbstractControl): Validation
           -->
           @if (drawError(); as error) { <p class="error-message" role="alert">{{ error }}</p> }
           <app-geographic-area-map (polygonDrawn)="convertPolygon($event)" />
-          <button type="button" class="secondary-button" [disabled]="converting()" (click)="finishDrawing()">{{ converting() ? 'Converting…' : 'Use polygon' }}</button>
+          <div class="map-actions">
+            <button type="button" class="secondary-button" [disabled]="converting()" (click)="finishDrawing()">{{ converting() ? 'Converting…' : 'Use polygon' }}</button>
+            <button type="button" class="secondary-button clear-area" (click)="clearArea()">Clear area</button>
+          </div>
           @if (convertedBounds(); as bounds) {
             <p class="bounds-result" role="status">Computed bbox: {{ bounds.bbox.join(', ') }} · Zoom {{ bounds.zoom }}. Save below to use this area.</p>
           }
@@ -278,6 +281,7 @@ const integerZoomValidator: ValidatorFn = (control: AbstractControl): Validation
     h2 { margin: 0; font-size: 1.1rem; }
     form { display: grid; gap: 1rem; margin-top: 1rem; }
     .map-tools { display: grid; gap: 0.75rem; margin: 1rem 0 1.5rem; }
+    .map-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
     /* Temporarily commented with the address search UI until a geocoder is configured.
     .address-form { display: grid; gap: 0.45rem; margin: 0; }
     .address-row { display: flex; gap: 0.5rem; }
@@ -392,6 +396,19 @@ export class AdminGeographicAreasPage implements OnInit {
     this.map?.finishDrawing();
   }
 
+  protected clearArea(): void {
+    this.map?.clearArea();
+    this.convertedBounds.set(null);
+    this.drawError.set(null);
+    this.areaForm.patchValue({
+      minLongitude: null,
+      minLatitude: null,
+      maxLongitude: null,
+      maxLatitude: null,
+      zoom: null,
+    });
+  }
+
   protected loadAreas(): void {
     this.areasState.set({ status: 'loading' });
     this.adminApi.listGeographicAreas().subscribe({
@@ -412,6 +429,8 @@ export class AdminGeographicAreasPage implements OnInit {
       zoom: area.definition.zoom,
       enabled: area.enabled === 1,
     });
+    this.map?.showBounds(area.definition.bbox, area.definition.zoom);
+    this.convertedBounds.set({ bbox: area.definition.bbox, zoom: area.definition.zoom });
     this.mutationError.set(null);
     this.mutationMessage.set(null);
   }
@@ -419,6 +438,8 @@ export class AdminGeographicAreasPage implements OnInit {
   protected cancelEdit(): void {
     this.editingArea.set(null);
     this.resetForm();
+    this.map?.clearArea();
+    this.convertedBounds.set(null);
   }
 
   protected saveArea(): void {
@@ -462,6 +483,8 @@ export class AdminGeographicAreasPage implements OnInit {
         this.saving.set(false);
         this.editingArea.set(null);
         this.resetForm();
+        this.map?.clearArea();
+        this.convertedBounds.set(null);
         this.mutationMessage.set(
           `${editingArea ? 'Updated' : 'Created'} ${savedArea.name}.`,
         );
