@@ -24,8 +24,10 @@ import {
   SortDirection,
   SortCriterion,
   SavedJob,
+  Category,
 } from '../../../core/models/api.models';
 import { JobsApiService } from '../data-access/jobs-api.service';
+import { ReferenceDataApiService } from '../data-access/reference-data-api.service';
 import { formatDate } from '../../../core/utils/date.util';
 
 const JOB_SORT_FIELDS: ReadonlySet<string> = new Set([
@@ -75,6 +77,15 @@ const salaryRangeValidator: ValidatorFn = (control: AbstractControl): Validation
             <div class="filter-field">
               <label for="location">Location</label>
               <input id="location" type="search" formControlName="location" autocomplete="location" placeholder="City or country" />
+            </div>
+            <div class="filter-field">
+              <label for="category">Category</label>
+              <select id="category" formControlName="category">
+                <option value="">All categories</option>
+                @for (category of categories(); track category.id) {
+                  <option [value]="category.id">{{ category.name }}</option>
+                }
+              </select>
             </div>
             <div class="filter-field remote-filter">
               <label for="is-remote">Is remote</label>
@@ -433,6 +444,7 @@ const salaryRangeValidator: ValidatorFn = (control: AbstractControl): Validation
 })
 export class JobSearchPage implements OnInit {
   private readonly jobsApi = inject(JobsApiService);
+  private readonly referenceDataApi = inject(ReferenceDataApiService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
@@ -448,7 +460,9 @@ export class JobSearchPage implements OnInit {
   protected readonly savingJobId = signal<string | null>(null);
   protected readonly jobActionErrorId = signal<string | null>(null);
   protected readonly jobActionError = signal<string | null>(null);
+  protected readonly categories = signal<Category[]>([]);
   protected readonly filterForm = new FormGroup({
+    category: new FormControl<string>('', { nonNullable: true }),
     organization: new FormControl('', { nonNullable: true }),
     location: new FormControl('', { nonNullable: true }),
     isRemote: new FormControl<boolean | null>(null),
@@ -488,6 +502,11 @@ export class JobSearchPage implements OnInit {
   }
 
   ngOnInit(): void {
+    this.referenceDataApi.getCategories()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (categories) => this.categories.set(categories),
+      });
     this.loadFavorites();
     this.route.queryParamMap
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -498,6 +517,7 @@ export class JobSearchPage implements OnInit {
         }
         const query = this.queryFromParams(params);
         this.filterForm.patchValue({
+          category: query.category ?? '',
           organization: query.organization ?? '',
           location: query.location ?? '',
           isRemote: query.allow_remote ?? null,
@@ -627,10 +647,14 @@ export class JobSearchPage implements OnInit {
       return;
     }
 
-    const { organization, location, isRemote, salaryMin, salaryMax } = this.filterForm.getRawValue();
+    const { category, organization, location, isRemote, salaryMin, salaryMax } = this.filterForm.getRawValue();
     const query: JobListQuery = {
       limit: this.currentQuery.limit,
     };
+    const normalizedCategory = category.trim();
+    if (normalizedCategory) {
+      query.category = normalizedCategory;
+    }
     const normalizedOrganization = organization.trim();
     if (normalizedOrganization) {
       query.organization = normalizedOrganization;
@@ -656,7 +680,7 @@ export class JobSearchPage implements OnInit {
   }
 
   protected clearFilters(): void {
-    this.filterForm.reset({ organization: '', location: '', isRemote: null, salaryMin: null, salaryMax: null });
+    this.filterForm.reset({ category: '', organization: '', location: '', isRemote: null, salaryMin: null, salaryMax: null });
     this.applyFilters();
   }
 
@@ -666,6 +690,7 @@ export class JobSearchPage implements OnInit {
     if (Object.keys(this.currentQuery).length > 0 &&
         this.currentQuery.limit === query.limit &&
         this.currentQuery.offset === query.offset &&
+        this.currentQuery.category === query.category &&
         this.currentQuery.organization === query.organization &&
         this.currentQuery.location === query.location &&
         this.currentQuery.allow_remote === query.allow_remote &&
@@ -746,6 +771,7 @@ export class JobSearchPage implements OnInit {
     const salaryMaximum = this.numberParam(params.get('salary_max'));
     const organization = params.get('organization')?.trim();
     const location = params.get('location')?.trim();
+    const category = params.get('category')?.trim();
     const allowRemoteRaw = params.get('allow_remote');
     const sortFields = params.getAll('sort').map((v) => v.trim()).filter((v) => v.length > 0);
     const sortDirs = params.getAll('sortDir').map((v) => v.trim());
@@ -756,6 +782,7 @@ export class JobSearchPage implements OnInit {
     if (salaryMaximum !== undefined) query.salary_max = salaryMaximum;
     if (organization) query.organization = organization;
     if (location) query.location = location;
+    if (category) query.category = category;
     if (allowRemoteRaw === 'true') query.allow_remote = true;
 
     const sorts: SortCriterion[] = [];
@@ -802,6 +829,7 @@ export class JobSearchPage implements OnInit {
 
   private toUrlParams(query: JobListQuery): Params {
     const params: Params = {
+      category: query.category ?? null,
       organization: query.organization ?? null,
       location: query.location ?? null,
       salary_min: query.salary_min ?? null,

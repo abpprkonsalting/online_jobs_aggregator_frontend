@@ -50,6 +50,7 @@ export interface JobListQuery {
   location?: string;
   allow_remote?: boolean;
   posted?: string;
+  category?: string;
 }
 
 export interface JobSkill {

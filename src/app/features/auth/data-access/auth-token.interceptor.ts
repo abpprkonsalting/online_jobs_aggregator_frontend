@@ -28,7 +28,7 @@ function protectedPath(url: string, apiBaseUrl: string): string | null {
 
 function acceptsAccessToken(path: string): boolean {
   return path === '/auth/me'
-    || /^\/(jobs|users|admin|master)(?:\/|$)/.test(path);
+    || /^\/(categories|skills|cities|countries|jobs|users|admin|master)(?:\/|$)/.test(path);
 }
 
 export const authTokenInterceptor: HttpInterceptorFn = (request, next) => {

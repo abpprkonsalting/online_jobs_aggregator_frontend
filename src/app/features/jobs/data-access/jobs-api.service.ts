@@ -41,6 +41,9 @@ export class JobsApiService {
     if (query.location !== undefined) {
       params = params.set('location', query.location);
     }
+    if (query.category !== undefined) {
+      params = params.set('category', query.category);
+    }
     if (query.allow_remote !== undefined) {
       params = params.set('allow_remote', query.allow_remote ? 'true' : 'false');
     }
