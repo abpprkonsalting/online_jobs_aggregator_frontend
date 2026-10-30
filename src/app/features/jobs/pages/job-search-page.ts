@@ -10,6 +10,8 @@ import {
 } from '@angular/forms';
 import { ActivatedRoute, ParamMap, Params, Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { forkJoin, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 import { TableModule } from 'primeng/table';
 import { TableLazyLoadEvent } from 'primeng/table';
 import { ApiError } from '../../../core/http/api-error';
@@ -21,9 +23,9 @@ import {
   JobSortField,
   SortDirection,
   SortCriterion,
+  SavedJob,
 } from '../../../core/models/api.models';
 import { JobsApiService } from '../data-access/jobs-api.service';
-import { JobResultCard } from '../components/job-result-card';
 import { formatDate } from '../../../core/utils/date.util';
 
 const JOB_SORT_FIELDS: ReadonlySet<string> = new Set([
@@ -51,7 +53,7 @@ const salaryRangeValidator: ValidatorFn = (control: AbstractControl): Validation
 
 @Component({
   selector: 'app-job-search-page',
-  imports: [ReactiveFormsModule, TableModule, RouterLink, JobResultCard],
+  imports: [ReactiveFormsModule, TableModule, RouterLink],
   template: `
     <section class="search-page">
       @if (!isDesktop()) {
@@ -59,182 +61,129 @@ const salaryRangeValidator: ValidatorFn = (control: AbstractControl): Validation
           <p>This view is meant to be used on desktop. Please open on a desktop device.</p>
         </div>
       } @else {
-        <form class="filters-bar" [formGroup]="filterForm" (ngSubmit)="applyFilters()">
-          <div class="filter-field">
-            <label for="organization">Organization</label>
-            <input
-              id="organization"
-              type="search"
-              formControlName="organization"
-              autocomplete="organization"
-              placeholder="Company name"
-            />
-          </div>
+        <nav class="job-tabs" role="group" aria-label="Job views">
+          <button type="button" [attr.aria-pressed]="activeTab() === 'search'" [class.active]="activeTab() === 'search'" (click)="setTab('search')">Search</button>
+          <button type="button" [attr.aria-pressed]="activeTab() === 'favorites'" [class.active]="activeTab() === 'favorites'" (click)="setTab('favorites')">Favorites@if (savedJobCount() !== null) { <span class="tab-count">{{ savedJobCount() }}</span> }</button>
+        </nav>
 
-          <div class="filter-field">
-            <label for="location">Location</label>
-            <input
-              id="location"
-              type="search"
-              formControlName="location"
-              autocomplete="location"
-              placeholder="City or country"
-            />
-          </div>
-
-          <div class="filter-field">
-            <label for="is-remote">Is remote</label>
-            <input
-              id="is-remote"
-              type="checkbox"
-              formControlName="isRemote"
-            />
-          </div>
-
-          <div class="filter-field salary-fields">
-            <div>
-              <label for="salary-min">Minimum salary</label>
-              <input
-                id="salary-min"
-                type="number"
-                min="0"
-                step="any"
-                formControlName="salaryMin"
-                inputmode="decimal"
-                placeholder="Any"
-              />
+        @if (activeTab() === 'search') {
+          <form class="filters-bar" [formGroup]="filterForm" (ngSubmit)="applyFilters()">
+            <div class="filter-field">
+              <label for="organization">Organization</label>
+              <input id="organization" type="search" formControlName="organization" autocomplete="organization" placeholder="Company name" />
             </div>
-            <div>
-              <label for="salary-max">Maximum salary</label>
-              <input
-                id="salary-max"
-                type="number"
-                min="0"
-                step="any"
-                formControlName="salaryMax"
-                inputmode="decimal"
-                placeholder="Any"
-              />
+            <div class="filter-field">
+              <label for="location">Location</label>
+              <input id="location" type="search" formControlName="location" autocomplete="location" placeholder="City or country" />
             </div>
-          </div>
-
-          @if (filterForm.hasError('salaryRange')) {
-            <p class="validation-message" role="alert">Minimum salary must not exceed maximum salary.</p>
-          }
-
-          <div class="filter-field actions" style="display: flex;flex-direction:row;">
-            <button type="submit" class="apply-button">Apply filters</button>
-            <button type="button" class="clear-button" (click)="clearFilters()">Clear filters</button>
-          </div>
-        </form>
-
-        <section class="results-panel" aria-labelledby="results-title">
-          @let currentState = state();
-          <div class="panel-heading results-heading">
-            <div>
-              <p class="eyebrow">Opportunities</p>
-              <h2 id="results-title">Search results</h2>
+            <div class="filter-field remote-filter">
+              <label for="is-remote">Is remote</label>
+              <input id="is-remote" type="checkbox" formControlName="isRemote" />
             </div>
-            @if (currentState.status === 'loaded') {
-              <span class="result-count">
-                {{ currentState.value.total }}
-                {{ currentState.value.total === 1 ? 'role' : 'roles' }}
-              </span>
+            <div class="filter-field salary-fields">
+              <div><label for="salary-min">Minimum salary</label><input id="salary-min" type="number" min="0" step="any" formControlName="salaryMin" inputmode="decimal" placeholder="Any" /></div>
+              <div><label for="salary-max">Maximum salary</label><input id="salary-max" type="number" min="0" step="any" formControlName="salaryMax" inputmode="decimal" placeholder="Any" /></div>
+            </div>
+            @if (filterForm.hasError('salaryRange')) {
+              <p class="validation-message" role="alert">Minimum salary must not exceed maximum salary.</p>
             }
-          </div>
+            <div class="filter-field actions">
+              <button type="submit" class="apply-button">Apply filters</button>
+              <button type="button" class="clear-button" (click)="clearFilters()">Clear filters</button>
+            </div>
+          </form>
 
-          @switch (currentState.status) {
-            @case ('loading') {
-              <div class="empty-results" role="status" aria-live="polite">
-                <span class="loading-indicator" aria-hidden="true"></span>
-                <h3>Loading jobs</h3>
-                <p>We're gathering the latest opportunities.</p>
-              </div>
-            }
-            @case ('error') {
-              <div class="empty-results" role="alert">
-                <span class="empty-icon error-icon" aria-hidden="true">!</span>
-                <h3>We couldn't load jobs</h3>
-                <p>{{ currentState.error.message }}</p>
-                <button type="button" class="retry-button" (click)="loadJobs()">Try again</button>
-              </div>
-            }
-            @case ('loaded') {
-              @if (currentState.value.jobs.length === 0) {
-                <div class="empty-results" role="status">
-                  <span class="empty-icon" aria-hidden="true">↗</span>
-                  <h3>No jobs found</h3>
-                  <p>There are no matching jobs right now. Please check back later.</p>
-                </div>
-              } @else {
-                <p-table
-                  [value]="currentState.value.jobs"
-                  [first]="currentState.value.offset"
-                  [paginator]="true"
-                  [paginatorPosition]="'both'"
-                  [rows]="currentState.value.limit"
-                  [totalRecords]="currentState.value.total"
-                  [rowsPerPageOptions]="[10, 20, 50]"
-                  [lazy]="true"
-                  [loading]="state().status === 'loading'"
-                  [sortMode]="'multiple'"
-                  (onLazyLoad)="onLazyLoad($event)"
-                  (onSort)="onSort($event)"
-                  [showCurrentPageReport]="true"
-                  currentPageReportTemplate="Showing {first} to {last} of {totalRecords} roles"
-                  [tableStyle]="{ 'min-width': '100%' }"
-                  role="table"
-                >
-                  <ng-template pTemplate="header">
-                    <tr>
-                      <th scope="col" pSortableColumn="title">Title <p-sortIcon field="title"></p-sortIcon></th>
-                      <th scope="col" pSortableColumn="organization">Organization <p-sortIcon field="organization"></p-sortIcon></th>
-                      <th scope="col">Location</th>
-                      <th scope="col" pSortableColumn="salary">Salary <p-sortIcon field="salary"></p-sortIcon></th>
-                      <th scope="col" pSortableColumn="posted_at">Posted <p-sortIcon field="posted_at"></p-sortIcon></th>
-                    </tr>
-                  </ng-template>
-                  <ng-template pTemplate="body" let-job>
-                    <tr [routerLink]="['/jobs', job.id]" class="job-row">
-                      <td class="title-cell">
-                        <app-job-result-card
-                          [job]="job"
-                          [isSaved]="savedJobIds().has(job.id)"
-                        />
-                      </td>
-                      <td>{{ job.organization }}</td>
-                      <td>{{ job.location ?? '-' }}</td>
+          <section class="results-panel" aria-labelledby="results-title">
+            @let currentState = state();
+            <div class="panel-heading results-heading">
+              <div><p class="eyebrow">Opportunities</p><h2 id="results-title">Search results</h2></div>
+              @if (currentState.status === 'loaded') {
+                <span class="result-count">{{ currentState.value.total }} {{ currentState.value.total === 1 ? 'role' : 'roles' }}</span>
+              }
+            </div>
+            @switch (currentState.status) {
+              @case ('loading') {
+                <div class="empty-results" role="status" aria-live="polite"><span class="loading-indicator" aria-hidden="true"></span><h3>Loading jobs</h3><p>We're gathering the latest opportunities.</p></div>
+              }
+              @case ('error') {
+                <div class="empty-results" role="alert"><span class="empty-icon error-icon" aria-hidden="true">!</span><h3>We couldn't load jobs</h3><p>{{ currentState.error.message }}</p><button type="button" class="retry-button" (click)="loadJobs()">Try again</button></div>
+              }
+              @case ('loaded') {
+                @if (currentState.value.jobs.length === 0) {
+                  <div class="empty-results" role="status"><span class="empty-icon" aria-hidden="true">↗</span><h3>No jobs found</h3><p>There are no matching jobs right now. Please check back later.</p></div>
+                } @else {
+                  <p-table
+                    [value]="currentState.value.jobs"
+                    [first]="currentState.value.offset"
+                    [paginator]="true"
+                    [paginatorPosition]="'both'"
+                    [rows]="currentState.value.limit"
+                    [totalRecords]="currentState.value.total"
+                    [rowsPerPageOptions]="[10, 20, 50]"
+                    [lazy]="true"
+                    [loading]="state().status === 'loading'"
+                    [sortMode]="'multiple'"
+                    (onLazyLoad)="onLazyLoad($event)"
+                    (onSort)="onSort($event)"
+                    [showCurrentPageReport]="true"
+                    currentPageReportTemplate="Showing {first} to {last} of {totalRecords} roles"
+                    [tableStyle]="{ width: '100%', 'table-layout': 'fixed' }"
+                    role="table"
+                  >
+                    <ng-template pTemplate="header"><tr>
+                      <th scope="col" class="title-column" pSortableColumn="title">Title <p-sortIcon field="title"></p-sortIcon></th>
+                      <th scope="col" class="organization-column" pSortableColumn="organization">Organization <p-sortIcon field="organization"></p-sortIcon></th>
+                      <th scope="col" class="location-column">Location</th>
+                      <th scope="col" class="salary-column" pSortableColumn="salary">Salary <p-sortIcon field="salary"></p-sortIcon></th>
+                      <th scope="col" class="posted-column" pSortableColumn="posted_at">Posted <p-sortIcon field="posted_at"></p-sortIcon></th>
+                      <th scope="col" class="remote-column">Remote</th>
+                      <th scope="col" class="save-column">Save Job</th>
+                    </tr></ng-template>
+                    <ng-template pTemplate="body" let-job><tr class="job-row">
+                      <td class="title-cell"><a class="job-title" [routerLink]="['/jobs', job.id]" [title]="job.title">{{ job.title }}</a></td>
+                      <td class="organization-cell" [title]="job.organization ?? ''">{{ job.organization ?? '—' }}</td>
+                      <td class="location-cell" [title]="job.location ?? ''">{{ job.location ?? '—' }}</td>
                       <td>{{ formatSalary(job) }}</td>
                       <td>{{ formatPostedDate(job) }}</td>
-                    </tr>
-                  </ng-template>
-                  <ng-template pTemplate="emptymessage">
-                    <tr>
-                      <td colspan="5" style="text-align: center; padding: 2rem;">
-                        <div class="empty-results" role="status">
-                          <span class="empty-icon" aria-hidden="true">↗</span>
-                          <h3>No jobs found</h3>
-                          <p>There are no matching jobs right now. Please check back later.</p>
-                        </div>
+                      <td class="remote-cell"><span [attr.aria-label]="job.allow_remote === 1 ? 'Remote' : 'Not remote'">{{ job.allow_remote === 1 ? '✓' : '—' }}</span></td>
+                      <td class="save-cell"><button type="button" class="save-button" [class.saved]="savedJobIds().has(job.id)" [attr.aria-pressed]="savedJobIds().has(job.id)" [disabled]="savingJobId() === job.id" (click)="toggleSavedJob(job)">{{ savingJobId() === job.id ? 'Saving…' : savedJobIds().has(job.id) ? 'Saved' : 'Save Job' }}</button>
+                        @if (jobActionErrorId() === job.id) { <span class="save-error" role="alert">{{ jobActionError() }}</span> }
                       </td>
-                    </tr>
-                  </ng-template>
-                  <ng-template pTemplate="loadingbody">
-                    <tr>
-                      <td colspan="5" style="text-align: center; padding: 2rem;">
-                        <div class="empty-results" role="status" aria-live="polite">
-                          <span class="loading-indicator" aria-hidden="true"></span>
-                          <h3>Loading jobs</h3>
-                          <p>We're gathering the latest opportunities.</p>
-                        </div>
-                      </td>
-                    </tr>
-                  </ng-template>
-                </p-table>
+                    </tr></ng-template>
+                    <ng-template pTemplate="emptymessage"><tr><td colspan="7" class="empty-cell"><div class="empty-results" role="status"><span class="empty-icon" aria-hidden="true">↗</span><h3>No jobs found</h3><p>There are no matching jobs right now. Please check back later.</p></div></td></tr></ng-template>
+                    <ng-template pTemplate="loadingbody"><tr><td colspan="7" class="empty-cell"><div class="empty-results" role="status" aria-live="polite"><span class="loading-indicator" aria-hidden="true"></span><h3>Loading jobs</h3><p>We're gathering the latest opportunities.</p></div></td></tr></ng-template>
+                  </p-table>
+                }
               }
             }
-          }
-        </section>
+          </section>
+        } @else {
+          <section class="results-panel favorites-panel" aria-labelledby="favorites-title">
+            <div class="panel-heading results-heading"><div><p class="eyebrow">Your collection</p><h2 id="favorites-title">Favorite jobs</h2></div><button type="button" class="clear-button" (click)="loadFavorites()">Refresh</button></div>
+            @let favorites = savedJobsState();
+            @switch (favorites.status) {
+              @case ('loading') { <div class="empty-results" role="status" aria-live="polite"><span class="loading-indicator" aria-hidden="true"></span><h3>Loading favorites</h3></div> }
+              @case ('error') { <div class="empty-results" role="alert"><h3>We couldn't load your favorites</h3><p>{{ favorites.error.message }}</p><button type="button" class="retry-button" (click)="loadFavorites()">Try again</button></div> }
+              @case ('loaded') {
+                @if (jobActionErrorId() && jobActionError()) { <p class="favorites-error" role="alert">{{ jobActionError() }}</p> }
+                @if (favorites.value.length === 0) { <div class="empty-results" role="status"><h3>No favorite jobs yet</h3><p>Save jobs from Search and they will appear here.</p><button type="button" class="retry-button" (click)="setTab('search')">Search jobs</button></div> }
+                @else {
+                  <table class="favorites-table"><thead><tr><th scope="col">Title</th><th scope="col">Organization</th><th scope="col">Location</th><th scope="col">Remote</th><th scope="col">Salary</th><th scope="col">Saved</th><th scope="col">Status</th><th scope="col">Action</th></tr></thead>
+                    <tbody>@for (item of favorites.value; track item.id) { <tr>
+                      <td><a class="job-title" [routerLink]="['/jobs', item.job_id]" [title]="item.job?.title ?? 'Job details unavailable'">{{ item.job?.title ?? 'Job details unavailable' }}</a></td>
+                      <td class="organization-cell" [title]="item.job?.organization ?? ''">{{ item.job?.organization ?? '—' }}</td>
+                      <td class="location-cell" [title]="item.job?.location ?? ''">{{ item.job?.location ?? '—' }}</td>
+                      <td class="remote-cell"><span [attr.aria-label]="item.job?.allow_remote === 1 ? 'Remote' : 'Not remote'">{{ item.job?.allow_remote === 1 ? '✓' : '—' }}</span></td>
+                      <td>{{ item.job ? formatSalary(item.job) : '—' }}</td><td>{{ formatSavedDate(item.created_at) }}</td><td>{{ item.status === 'applied' ? 'Applied' : 'Saved' }}</td>
+                      <td><button type="button" class="remove-button" [disabled]="savingJobId() === item.job_id" (click)="removeFavorite(item.job_id)">{{ savingJobId() === item.job_id ? 'Removing…' : 'Remove' }}</button></td>
+                    </tr> }</tbody>
+                  </table>
+                }
+              }
+              @case ('idle') { <p>Favorites have not been loaded.</p> }
+            }
+          </section>
+        }
       }
     </section>
   `,
@@ -468,64 +417,6 @@ const salaryRangeValidator: ValidatorFn = (control: AbstractControl): Validation
       outline-offset: 3px;
     }
 
-    .job-row {
-      cursor: pointer;
-    }
-
-    .job-row:hover {
-      background: #f5f7f6;
-    }
-
-    .job-row td {
-      white-space: nowrap;
-      overflow: visible;
-      text-overflow: ellipsis;
-    }
-
-    .title-cell {
-      position: relative;
-    }
-
-    .job-title {
-      display: block;
-      font-weight: 700;
-      color: var(--color-ink);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 100%;
-    }
-
-    .job-description {
-      position: absolute;
-      top: 100%;
-      left: 0;
-      z-index: 10;
-      display: none;
-      min-width: 20rem;
-      max-width: 48rem;
-      max-height: 14rem;
-      padding: 0.75rem 1rem;
-      border: 1px solid var(--color-border);
-      border-radius: 0.6rem;
-      background: var(--color-surface);
-      color: var(--color-ink);
-      font-size: 0.85rem;
-      line-height: 1.55;
-      white-space: pre-wrap;
-      overflow-wrap: anywhere;
-      overflow: hidden;
-      -webkit-box-orient: vertical;
-      -webkit-line-clamp: 6;
-      box-shadow: 1rem 1rem 1.5rem rgb(0 0 0 / 50%);
-    }
-
-    .title-cell:hover .job-description {
-      display: -webkit-box;
-      left: 25px;
-    top: 35px;
-    overflow-y: auto;
-    }
 
     @keyframes spin {
       to {
@@ -548,6 +439,15 @@ export class JobSearchPage implements OnInit {
   private _sortChangeNavigating = false;
   protected readonly state = signal<AsyncState<JobListResponse>>({ status: 'loading' });
   protected readonly savedJobIds = signal<Set<string>>(new Set());
+  protected readonly savedJobsState = signal<AsyncState<SavedJob[]>>({ status: 'loading' });
+  protected readonly savedJobCount = computed(() => {
+    const saved = this.savedJobsState();
+    return saved.status === 'loaded' ? saved.value.length : null;
+  });
+  protected readonly activeTab = signal<'search' | 'favorites'>('search');
+  protected readonly savingJobId = signal<string | null>(null);
+  protected readonly jobActionErrorId = signal<string | null>(null);
+  protected readonly jobActionError = signal<string | null>(null);
   protected readonly filterForm = new FormGroup({
     organization: new FormControl('', { nonNullable: true }),
     location: new FormControl('', { nonNullable: true }),
@@ -583,7 +483,12 @@ export class JobSearchPage implements OnInit {
     this.isDesktop.set((event.target as Window).innerWidth >= VIEWPORT_BREAKPOINT);
   }
 
+  protected formatSavedDate(value: string): string {
+    return formatDate(value) ?? '—';
+  }
+
   ngOnInit(): void {
+    this.loadFavorites();
     this.route.queryParamMap
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((params) => {
@@ -601,6 +506,119 @@ export class JobSearchPage implements OnInit {
         });
         this.loadJobs(query);
       });
+  }
+
+  protected setTab(tab: 'search' | 'favorites'): void {
+    this.activeTab.set(tab);
+    if (tab === 'favorites' && this.savedJobsState().status === 'idle') {
+      this.loadFavorites();
+    }
+  }
+
+  protected loadFavorites(): void {
+    this.savedJobsState.set({ status: 'loading' });
+    this.jobsApi.listSavedJobs().subscribe({
+      next: (savedJobs) => {
+        this.savedJobIds.set(new Set(savedJobs.map((item) => item.job_id)));
+        if (savedJobs.length === 0) {
+          this.savedJobsState.set({ status: 'loaded', value: [] });
+          return;
+        }
+
+        const hydratedJobs = savedJobs.map((item) => {
+          if (item.job?.title) return of(item);
+          return this.jobsApi.getById(item.job_id).pipe(
+            map((job) => ({ ...item, job })),
+            catchError(() => of({ ...item, job: this.missingJobDetails(item.job_id) })),
+          );
+        });
+        forkJoin(hydratedJobs).subscribe({
+          next: (items) => this.savedJobsState.set({ status: 'loaded', value: items }),
+          error: (error: ApiError) => this.savedJobsState.set({ status: 'error', error }),
+        });
+      },
+      error: (error: ApiError) => this.savedJobsState.set({ status: 'error', error }),
+    });
+  }
+
+  protected toggleSavedJob(job: JobListItem): void {
+    if (this.savingJobId() !== null) return;
+    this.savingJobId.set(job.id);
+    this.jobActionErrorId.set(null);
+    this.jobActionError.set(null);
+    const isSaved = this.savedJobIds().has(job.id);
+    if (isSaved) {
+      this.jobsApi.unsaveJob(job.id).subscribe({
+        next: () => {
+          this.savingJobId.set(null);
+          this.removeSavedJobLocally(job.id);
+        },
+        error: (error: ApiError) => this.handleFavoriteError(job.id, error, 'Could not remove this favorite.'),
+      });
+    } else {
+      this.jobsApi.saveJob(job.id, 'saved').subscribe({
+        next: () => {
+          this.savingJobId.set(null);
+          this.savedJobIds.update((ids) => new Set([...ids, job.id]));
+          this.loadFavorites();
+        },
+        error: (error: ApiError) => this.handleFavoriteError(job.id, error, 'Could not save this job.'),
+      });
+    }
+  }
+
+  private removeSavedJobLocally(jobId: string): void {
+    this.savedJobIds.update((ids) => {
+      const next = new Set(ids);
+      next.delete(jobId);
+      return next;
+    });
+    this.savedJobsState.update((state) => {
+      const items = state.status === 'loaded' ? state.value : [];
+      return {
+        status: 'loaded',
+        value: items.filter((entry) => entry.job_id !== jobId),
+      };
+    });
+  }
+
+  private missingJobDetails(jobId: string): JobListItem {
+    return {
+      id: jobId,
+      source_id: '',
+      title: 'Job details unavailable',
+      organization: null,
+      job_url: '',
+      description_text: null,
+      allow_remote: null,
+      location: null,
+      salary_min: null,
+      salary_max: null,
+      salary_currency: null,
+      salary_unit: null,
+      date_posted: null,
+      posted_at: null,
+    };
+  }
+
+  private handleFavoriteError(jobId: string, error: ApiError, fallback: string): void {
+    this.savingJobId.set(null);
+    this.jobActionErrorId.set(jobId);
+    this.jobActionError.set(error.message ?? fallback);
+  }
+
+  protected removeFavorite(jobId: string): void {
+    if (this.savingJobId() !== null) return;
+    this.savingJobId.set(jobId);
+    this.jobActionErrorId.set(null);
+    this.jobActionError.set(null);
+    this.jobsApi.unsaveJob(jobId).subscribe({
+      next: () => {
+        this.savingJobId.set(null);
+        this.removeSavedJobLocally(jobId);
+      },
+      error: (error: ApiError) => this.handleFavoriteError(jobId, error, 'Could not remove this favorite.'),
+    });
   }
 
   protected applyFilters(): void {

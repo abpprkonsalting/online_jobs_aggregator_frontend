@@ -60,3 +60,74 @@ textarea {
 .p-paginator-current {
   margin-right: auto;
 }
+
+/* Jobs page tabs and fixed-width result tables */
+app-job-search-page .job-tabs {
+  display: flex;
+  gap: 0.25rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--color-border);
+}
+app-job-search-page .job-tabs button {
+  display: inline-flex;
+  min-width: 8rem;
+  min-height: 2.9rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1rem;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 650;
+}
+app-job-search-page .job-tabs button.active {
+  border-bottom-color: var(--color-accent);
+  color: var(--color-ink);
+}
+app-job-search-page .tab-count {
+  display: inline-grid;
+  min-width: 1.35rem;
+  height: 1.35rem;
+  place-items: center;
+  padding-inline: 0.25rem;
+  border-radius: 99px;
+  background: var(--color-subtle);
+  font-size: 0.75rem;
+}
+app-job-search-page .job-row:hover, app-job-search-page .favorites-table tbody tr:hover { background: #f5f7f6; }
+app-job-search-page .job-row td, app-job-search-page .favorites-table td { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+app-job-search-page .title-column { width: 24%; }
+app-job-search-page .organization-column { width: 17%; }
+app-job-search-page .location-column { width: 18%; }
+app-job-search-page .salary-column { width: 13%; }
+app-job-search-page .posted-column { width: 11%; }
+app-job-search-page .remote-column { width: 8%; text-align: center; }
+app-job-search-page .save-column { width: 9%; }
+app-job-search-page .title-cell { max-width: 0; }
+app-job-search-page .job-title { display: block; max-width: 100%; overflow: hidden; color: var(--color-ink); font-weight: 650; text-overflow: ellipsis; text-decoration: none; white-space: nowrap; }
+app-job-search-page .job-title:hover { color: var(--color-accent-dark); text-decoration: underline; text-underline-offset: 0.2em; }
+app-job-search-page .organization-cell, app-job-search-page .location-cell { max-width: 0; }
+app-job-search-page .remote-cell { text-align: center; font-weight: 700; color: var(--color-accent-dark); }
+app-job-search-page .save-cell { overflow: visible !important; text-align: center; }
+app-job-search-page .save-button, app-job-search-page .remove-button { min-height: 2.45rem; padding: 0.45rem 0.65rem; border: 1px solid var(--color-border); border-radius: 0.5rem; background: var(--color-surface); color: var(--color-ink); cursor: pointer; font: inherit; font-size: 0.8rem; font-weight: 650; }
+app-job-search-page .save-button.saved { border-color: var(--color-accent-dark); background: var(--color-accent-dark); color: #fff; }
+app-job-search-page .save-button:disabled, app-job-search-page .remove-button:disabled { cursor: wait; opacity: 0.65; }
+app-job-search-page .save-error { display: block; max-width: 9rem; color: #9b321d; font-size: 0.72rem; white-space: normal; }
+app-job-search-page .favorites-error { margin: 0.75rem 1.5rem; color: #9b321d; font-size: 0.85rem; }
+app-job-search-page .remove-button { border-color: #f3d1c8; background: #fff0ec; color: #9b321d; }
+app-job-search-page .empty-cell { padding: 0 !important; text-align: center; }
+app-job-search-page .favorites-table { width: 100%; table-layout: fixed; border-collapse: collapse; text-align: left; }
+app-job-search-page .favorites-table th, app-job-search-page .favorites-table td { padding: 0.75rem 0.55rem; border-bottom: 1px solid var(--color-border); }
+app-job-search-page .favorites-table th { color: var(--color-muted); font-size: 0.8rem; white-space: nowrap; }
+app-job-search-page .favorites-table th:nth-child(1) { width: 23%; }
+app-job-search-page .favorites-table th:nth-child(2) { width: 15%; }
+app-job-search-page .favorites-table th:nth-child(3) { width: 16%; }
+app-job-search-page .favorites-table th:nth-child(4) { width: 7%; }
+app-job-search-page .favorites-table th:nth-child(5) { width: 12%; }
+app-job-search-page .favorites-table th:nth-child(6) { width: 10%; }
+app-job-search-page .favorites-table th:nth-child(7) { width: 7%; }
+app-job-search-page .favorites-table th:nth-child(8) { width: 10%; }
