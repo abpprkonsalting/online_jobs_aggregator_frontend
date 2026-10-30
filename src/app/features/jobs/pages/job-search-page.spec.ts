@@ -48,6 +48,7 @@ describe('JobSearchPage', () => {
     harness = await RouterTestingHarness.create(url);
     harness.detectChanges();
     await harness.fixture.whenStable();
+    httpTesting.expectOne('/api/categories').flush([]);
     httpTesting.expectOne('/api/users/me/saved-jobs').flush([]);
     harness.detectChanges();
     return harness;

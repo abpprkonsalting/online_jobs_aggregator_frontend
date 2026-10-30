@@ -88,7 +88,7 @@ describe('CategoryInterestsPage', () => {
     interests: UserCategoryInterest[],
   ): HTMLElement {
     const categoriesRequest = httpTesting.expectOne('/api/categories');
-    expect(categoriesRequest.request.headers.has('Authorization')).toBe(false);
+    expect(categoriesRequest.request.headers.get('Authorization')).toBe('Bearer access-token');
     categoriesRequest.flush(categories);
 
     const interestsRequest = httpTesting.expectOne(`/api/users/${userId}/categories`);
@@ -139,6 +139,8 @@ describe('CategoryInterestsPage', () => {
       .toContain('Engineering');
 
     await pageHarness.navigateByUrl('/jobs');
+    httpTesting.expectOne('/api/categories').flush([]);
+    httpTesting.expectOne('/api/users/me/saved-jobs').flush([]);
     httpTesting.expectOne('/api/jobs').flush(emptyJobs);
     await pageHarness.navigateByUrl('/account');
     pageHarness.detectChanges();

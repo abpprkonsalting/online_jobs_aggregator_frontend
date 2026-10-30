@@ -128,7 +128,7 @@ describe('AdminMasterDataPage', () => {
     expect(page.querySelector('tbody')?.textContent).toContain('TypeScript');
     selectSection(page, 'Locations');
     pageHarness.detectChanges();
-    expect(page.querySelector('tbody')?.textContent).toContain('Boston');
+    expect(page.querySelector('[aria-labelledby="cities-title"] tbody')?.textContent).toContain('Boston');
     selectSection(page, 'Keywords');
     pageHarness.detectChanges();
     expect(page.querySelector('tbody')?.textContent).toContain('Angular');

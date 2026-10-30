@@ -113,6 +113,8 @@ describe('SignInPage', () => {
       role: 'user',
     });
     expect(TestBed.inject(Router).url).toBe('/jobs');
+    httpTesting.expectOne('/api/categories').flush([]);
+    httpTesting.expectOne('/api/users/me/saved-jobs').flush([]);
     httpTesting.expectOne('/api/jobs').flush({
       jobs: [],
       total: 0,
@@ -152,6 +154,8 @@ describe('SignInPage', () => {
     await pageHarness.fixture.whenStable();
 
     expect(TestBed.inject(Router).url).toBe('/jobs');
+    httpTesting.expectOne('/api/users/me/saved-jobs').flush([]);
+    httpTesting.expectOne('/api/categories').flush([]);
     httpTesting.expectOne('/api/jobs').flush({
       jobs: [],
       total: 0,
