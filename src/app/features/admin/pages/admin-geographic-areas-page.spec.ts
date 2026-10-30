@@ -11,6 +11,7 @@ import { AuthApiService } from '../../auth/data-access/auth-api.service';
 import { authTokenInterceptor } from '../../auth/data-access/auth-token.interceptor';
 import { AuthSessionService } from '../../auth/data-access/auth-session.service';
 import { AdminApiService } from '../data-access/admin-api.service';
+import { GeographicAreaMap } from '../components/geographic-area-map';
 import { AdminGeographicArea } from '../models/admin.models';
 import { AdminGeographicAreasPage } from './admin-geographic-areas-page';
 
@@ -130,6 +131,38 @@ describe('AdminGeographicAreasPage', () => {
     const page = pageHarness.routeNativeElement as HTMLElement;
     expect(page.textContent).toContain('Computed bbox: -3.8, 40.3, -3.6, 40.5');
     expect((page.querySelector('#area-zoom') as HTMLInputElement).value).toBe('9');
+  });
+
+  it('shows the saved bounding rectangle on the map when editing an area', async () => {
+    const showBounds = vi.spyOn(GeographicAreaMap.prototype, 'showBounds');
+    const pageHarness = await openPage();
+    httpTesting.expectOne('/api/admin/geographic-areas').flush([area]);
+    pageHarness.detectChanges();
+
+    ((pageHarness.routeNativeElement as HTMLElement).querySelector('.edit-area') as HTMLButtonElement).click();
+    pageHarness.detectChanges();
+
+    const page = pageHarness.routeNativeElement as HTMLElement;
+    expect(showBounds).toHaveBeenCalledWith([-71.2, 42.1, -70.9, 42.5], 9);
+    expect(page.textContent).toContain('Computed bbox: -71.2, 42.1, -70.9, 42.5');
+  });
+
+  it('clears the map shape and its coordinate fields when Clear area is selected', async () => {
+    const clearArea = vi.spyOn(GeographicAreaMap.prototype, 'clearArea');
+    const pageHarness = await openPage();
+    httpTesting.expectOne('/api/admin/geographic-areas').flush([area]);
+    pageHarness.detectChanges();
+
+    const page = pageHarness.routeNativeElement as HTMLElement;
+    (page.querySelector('.edit-area') as HTMLButtonElement).click();
+    pageHarness.detectChanges();
+    (page.querySelector('.clear-area') as HTMLButtonElement).click();
+    pageHarness.detectChanges();
+
+    expect(clearArea).toHaveBeenCalledOnce();
+    expect((page.querySelector('#min-longitude') as HTMLInputElement).value).toBe('');
+    expect((page.querySelector('#area-zoom') as HTMLInputElement).value).toBe('');
+    expect(page.textContent).not.toContain('Computed bbox:');
   });
 
   it('creates an area using the documented bbox and zoom shape, then reloads', async () => {
