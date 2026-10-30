@@ -90,6 +90,7 @@ describe('AdminGeographicAreasPage', () => {
     expect(page.querySelector('tbody')?.textContent).toContain('9');
   });
 
+  /* Temporarily commented out while the address search UI is disabled pending geocoder configuration.
   it('renders an interactive map and geocodes an address to center and prefill the bbox', async () => {
     const pageHarness = await openPage();
     httpTesting.expectOne('/api/admin/geographic-areas').flush([]);
@@ -108,6 +109,7 @@ describe('AdminGeographicAreasPage', () => {
     pageHarness.detectChanges();
     expect(Number((page.querySelector('#min-longitude') as HTMLInputElement).value)).toBeCloseTo(-3.8);
   });
+  */
 
   it('submits a drawn polygon to the conversion endpoint and uses returned bounds', async () => {
     const pageHarness = await openPage();
