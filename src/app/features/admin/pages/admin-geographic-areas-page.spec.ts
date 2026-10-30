@@ -90,6 +90,46 @@ describe('AdminGeographicAreasPage', () => {
     expect(page.querySelector('tbody')?.textContent).toContain('9');
   });
 
+  it('renders an interactive map and geocodes an address to center and prefill the bbox', async () => {
+    const pageHarness = await openPage();
+    httpTesting.expectOne('/api/admin/geographic-areas').flush([]);
+    pageHarness.detectChanges();
+    const page = pageHarness.routeNativeElement as HTMLElement;
+    expect(page.querySelector('[aria-label="Map to draw a geographic area"]')).not.toBeNull();
+    const input = page.querySelector('#area-address') as HTMLInputElement;
+    input.value = 'Madrid, Spain';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    pageHarness.detectChanges();
+    (input.closest('.address-row')!.querySelector('button') as HTMLButtonElement).click();
+    const request = httpTesting.expectOne('/api/geocode');
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toEqual({ address: 'Madrid, Spain' });
+    request.flush({ lat: 40.4, lng: -3.7 });
+    pageHarness.detectChanges();
+    expect(Number((page.querySelector('#min-longitude') as HTMLInputElement).value)).toBeCloseTo(-3.8);
+  });
+
+  it('submits a drawn polygon to the conversion endpoint and uses returned bounds', async () => {
+    const pageHarness = await openPage();
+    httpTesting.expectOne('/api/admin/geographic-areas').flush([]);
+    const geometry: GeoJSON.Polygon = {
+      type: 'Polygon',
+      coordinates: [[[-3.8, 40.3], [-3.6, 40.3], [-3.6, 40.5], [-3.8, 40.3]]],
+    };
+    const component = pageHarness.routeDebugElement!.componentInstance as {
+      convertPolygon(polygon: GeoJSON.Polygon): void;
+    };
+    component.convertPolygon(geometry);
+    const request = httpTesting.expectOne('/api/admin/geographic-areas/from-geometry');
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toEqual({ geometry });
+    request.flush({ bbox: [-3.8, 40.3, -3.6, 40.5], zoom: 9 });
+    pageHarness.detectChanges();
+    const page = pageHarness.routeNativeElement as HTMLElement;
+    expect(page.textContent).toContain('Computed bbox: -3.8, 40.3, -3.6, 40.5');
+    expect((page.querySelector('#area-zoom') as HTMLInputElement).value).toBe('9');
+  });
+
   it('creates an area using the documented bbox and zoom shape, then reloads', async () => {
     const pageHarness = await openPage();
     httpTesting.expectOne('/api/admin/geographic-areas').flush([]);
