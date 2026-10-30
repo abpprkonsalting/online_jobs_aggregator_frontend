@@ -50,6 +50,11 @@ function isConfigObject(value: unknown): value is Record<string, unknown> {
               }
             </div>
             <div class="field">
+              <label for="source-code-id">Adapter identification code</label>
+              <input id="source-code-id" type="text" formControlName="codeId" />
+              <p class="field-hint">Must match the source adapter class name (e.g. ReziJobSource).</p>
+            </div>
+            <div class="field">
               <label for="source-type">Type</label>
               <select id="source-type" formControlName="type">
                 <option value="api">API</option>
@@ -400,6 +405,7 @@ export class AdminSourcesPage implements OnInit {
   protected readonly configError = signal<string | null>(null);
   protected readonly sourceForm = new FormGroup({
     name: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    codeId: new FormControl('', { nonNullable: true }),
     type: new FormControl<SourceType>('api', { nonNullable: true }),
     workingMode: new FormControl<SourceWorkingMode>('both', { nonNullable: true }),
     enabled: new FormControl(true, { nonNullable: true }),
@@ -425,6 +431,7 @@ export class AdminSourcesPage implements OnInit {
     this.mutationMessage.set(null);
     this.sourceForm.setValue({
       name: source.name,
+      codeId: source.code_id ?? '',
       type: source.type,
       workingMode: source.working_mode,
       enabled: source.enabled === 1,
@@ -464,11 +471,12 @@ export class AdminSourcesPage implements OnInit {
     this.mutationMessage.set(null);
     this.saving.set(true);
 
-    const { name, type, workingMode, enabled } = this.sourceForm.getRawValue();
+    const { name, codeId, type, workingMode, enabled } = this.sourceForm.getRawValue();
     const source = this.editingSource();
     const request = source
       ? this.adminApi.updateSource(source.id, {
           name,
+          code_id: codeId,
           working_mode: workingMode,
           config,
           enabled,
@@ -476,6 +484,7 @@ export class AdminSourcesPage implements OnInit {
       : this.adminApi.createSource({
           name,
           type,
+          code_id: codeId,
           working_mode: workingMode,
           config,
           enabled,
@@ -567,6 +576,7 @@ export class AdminSourcesPage implements OnInit {
     this.sourceForm.controls.type.enable();
     this.sourceForm.reset({
       name: '',
+      codeId: '',
       type: 'api',
       workingMode: 'both',
       enabled: true,

@@ -39,6 +39,7 @@ export interface GeographicAreaDefinition {
 export interface AdminSource {
   id: string;
   name: string;
+  code_id: string | null;
   type: SourceType;
   working_mode: SourceWorkingMode;
   config: Record<string, unknown>;
@@ -52,6 +53,7 @@ export interface AdminSource {
 export interface CreateAdminSourceRequest {
   name: string;
   type: SourceType;
+  code_id?: string;
   working_mode?: SourceWorkingMode;
   config: Record<string, unknown>;
   enabled?: boolean;
@@ -59,6 +61,7 @@ export interface CreateAdminSourceRequest {
 
 export interface UpdateAdminSourceRequest {
   name?: string;
+  code_id?: string;
   working_mode?: SourceWorkingMode;
   config?: Record<string, unknown>;
   enabled?: boolean;
