@@ -70,7 +70,7 @@ describe('authTokenInterceptor', () => {
     request.flush({ jobs: [], total: 0, limit: 20, offset: 0, hasMore: false });
   });
 
-  it('does not add the access token to public API requests', () => {
+  it('adds the access token to reference-data requests that require authentication', () => {
     session.setSession('access-token', {
       id: 'user-1',
       email: 'user@example.com',
@@ -79,8 +79,21 @@ describe('authTokenInterceptor', () => {
     api.get('/categories').subscribe();
 
     const request = httpTesting.expectOne('/api/categories');
-    expect(request.request.headers.has('Authorization')).toBe(false);
+    expect(request.request.headers.get('Authorization')).toBe('Bearer access-token');
     request.flush([]);
+  });
+
+  it('does not add the access token to public API requests', () => {
+    session.setSession('access-token', {
+      id: 'user-1',
+      email: 'user@example.com',
+      role: 'user',
+    });
+    api.get('/health').subscribe();
+
+    const request = httpTesting.expectOne('/api/health');
+    expect(request.request.headers.has('Authorization')).toBe(false);
+    request.flush({ status: 'ok' });
   });
 
   it('does not send the access token to a third-party URL', () => {
