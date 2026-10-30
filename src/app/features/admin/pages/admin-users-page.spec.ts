@@ -134,6 +134,48 @@ describe('AdminUsersPage', () => {
     httpTesting.expectNone('/api/users');
   });
 
+  it('sends a test email to the entered recipient and reports the channel result', async () => {
+    const pageHarness = await openPage();
+    httpTesting.expectOne('/api/users').flush(users);
+    pageHarness.detectChanges();
+
+    const page = pageHarness.routeNativeElement as HTMLElement;
+    const email = page.querySelector('#test-email-address') as HTMLInputElement;
+    email.value = '  inbox@example.com  ';
+    email.dispatchEvent(new Event('input', { bubbles: true }));
+    (email.closest('form') as HTMLFormElement).dispatchEvent(
+      new Event('submit', { bubbles: true, cancelable: true }),
+    );
+
+    const request = httpTesting.expectOne('/api/admin/notifications/test');
+    expect(request.request.method).toBe('POST');
+    expect(request.request.headers.get('Authorization')).toBe('Bearer admin-token');
+    expect(request.request.body).toEqual({ email: 'inbox@example.com' });
+    request.flush({ success: true, channels: ['smtp'] });
+    pageHarness.detectChanges();
+
+    expect(page.querySelector('[role="status"]')?.textContent).toContain('Test email sent via smtp.');
+    expect(page.querySelector('[role="alert"]')).toBeNull();
+  });
+
+  it('validates the test email recipient without calling the API', async () => {
+    const pageHarness = await openPage();
+    httpTesting.expectOne('/api/users').flush(users);
+    pageHarness.detectChanges();
+
+    const page = pageHarness.routeNativeElement as HTMLElement;
+    const email = page.querySelector('#test-email-address') as HTMLInputElement;
+    email.value = 'invalid-address';
+    email.dispatchEvent(new Event('input', { bubbles: true }));
+    (email.closest('form') as HTMLFormElement).dispatchEvent(
+      new Event('submit', { bubbles: true, cancelable: true }),
+    );
+    pageHarness.detectChanges();
+
+    expect(page.textContent).toContain('Enter a valid email address.');
+    httpTesting.expectNone('/api/admin/notifications/test');
+  });
+
   it('shows duplicate and validation failures without presenting a success state', async () => {
     const pageHarness = await openPage();
     httpTesting.expectOne('/api/users').flush(users);
