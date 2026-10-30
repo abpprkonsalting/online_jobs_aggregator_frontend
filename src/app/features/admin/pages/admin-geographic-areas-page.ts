@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, ViewChild } from '@angular/core';
 import {
   AbstractControl,
   FormControl,
@@ -13,6 +13,8 @@ import { ApiError } from '../../../core/http/api-error';
 import { AsyncState } from '../../../core/models/async-state';
 import { AdminApiService } from '../data-access/admin-api.service';
 import { AdminGeographicArea } from '../models/admin.models';
+import { GeographicAreaMap } from '../components/geographic-area-map';
+import type { Polygon as GeoJsonPolygon } from 'geojson';
 
 const boundingBoxValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
   const minLongitude = control.get('minLongitude')?.value;
@@ -39,7 +41,7 @@ const integerZoomValidator: ValidatorFn = (control: AbstractControl): Validation
 
 @Component({
   selector: 'app-admin-geographic-areas-page',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, GeographicAreaMap],
   template: `
     <section class="admin-page" aria-labelledby="page-title">
       <header class="page-header">
@@ -65,6 +67,22 @@ const integerZoomValidator: ValidatorFn = (control: AbstractControl): Validation
         @if (mutationMessage(); as message) {
           <p class="success-message" role="status" aria-live="polite">{{ message }}</p>
         }
+        <div class="map-tools">
+          <div class="address-form">
+            <label for="area-address">Find an address</label>
+            <div class="address-row">
+              <input id="area-address" type="text" [value]="address()" (input)="address.set($any($event.target).value)" placeholder="City, address, or landmark" />
+              <button type="button" class="secondary-button" [disabled]="geocoding() || !address().trim()" (click)="resolveAddress()">{{ geocoding() ? 'Searching…' : 'Find address' }}</button>
+            </div>
+          </div>
+          @if (geocodeError(); as error) { <p class="error-message" role="alert">{{ error }}</p> }
+          @if (drawError(); as error) { <p class="error-message" role="alert">{{ error }}</p> }
+          <app-geographic-area-map (polygonDrawn)="convertPolygon($event)" />
+          <button type="button" class="secondary-button" [disabled]="converting()" (click)="finishDrawing()">{{ converting() ? 'Converting…' : 'Use polygon' }}</button>
+          @if (convertedBounds(); as bounds) {
+            <p class="bounds-result" role="status">Computed bbox: {{ bounds.bbox.join(', ') }} · Zoom {{ bounds.zoom }}. Save below to use this area.</p>
+          }
+        </div>
         <form [formGroup]="areaForm" (ngSubmit)="saveArea()">
           <div class="form-grid">
             <div class="field">
@@ -257,6 +275,11 @@ const integerZoomValidator: ValidatorFn = (control: AbstractControl): Validation
     }
     h2 { margin: 0; font-size: 1.1rem; }
     form { display: grid; gap: 1rem; margin-top: 1rem; }
+    .map-tools { display: grid; gap: 0.75rem; margin: 1rem 0 1.5rem; }
+    .address-form { display: grid; gap: 0.45rem; margin: 0; }
+    .address-row { display: flex; gap: 0.5rem; }
+    .address-row input { flex: 1; }
+    .bounds-result { margin: 0; color: var(--color-accent-dark); font-weight: 650; }
     .form-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.85rem; }
     .field { display: grid; align-content: start; gap: 0.45rem; }
     label, th { font-size: 0.85rem; font-weight: 650; }
@@ -296,11 +319,18 @@ const integerZoomValidator: ValidatorFn = (control: AbstractControl): Validation
 })
 export class AdminGeographicAreasPage implements OnInit {
   private readonly adminApi = inject(AdminApiService);
+  @ViewChild(GeographicAreaMap) private map?: GeographicAreaMap;
   protected readonly areasState = signal<AsyncState<AdminGeographicArea[]>>({ status: 'loading' });
   protected readonly editingArea = signal<AdminGeographicArea | null>(null);
   protected readonly saving = signal(false);
   protected readonly mutationError = signal<string | null>(null);
   protected readonly mutationMessage = signal<string | null>(null);
+  protected readonly address = signal('');
+  protected readonly geocoding = signal(false);
+  protected readonly geocodeError = signal<string | null>(null);
+  protected readonly converting = signal(false);
+  protected readonly drawError = signal<string | null>(null);
+  protected readonly convertedBounds = signal<{ bbox: [number, number, number, number]; zoom: number } | null>(null);
   protected readonly areaForm = new FormGroup({
     name: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     minLongitude: new FormControl<number | null>(null, [Validators.required, Validators.min(-180), Validators.max(180)]),
@@ -317,6 +347,45 @@ export class AdminGeographicAreasPage implements OnInit {
 
   ngOnInit(): void {
     this.loadAreas();
+  }
+
+  protected resolveAddress(): void {
+    const address = this.address().trim();
+    if (!address || this.geocoding()) return;
+    this.geocoding.set(true);
+    this.geocodeError.set(null);
+    this.adminApi.geocode(address).subscribe({
+      next: ({ lat, lng }) => {
+        this.geocoding.set(false);
+        this.map?.centerOn(lat, lng);
+        this.areaForm.patchValue({ minLongitude: lng - 0.1, minLatitude: lat - 0.1, maxLongitude: lng + 0.1, maxLatitude: lat + 0.1 });
+      },
+      error: (error: unknown) => {
+        this.geocoding.set(false);
+        this.geocodeError.set(error instanceof Error ? error.message : 'Address could not be resolved.');
+      },
+    });
+  }
+
+  protected convertPolygon(geometry: GeoJsonPolygon): void {
+    this.converting.set(true);
+    this.drawError.set(null);
+    this.adminApi.convertGeometry(geometry).subscribe({
+      next: (bounds) => {
+        this.converting.set(false);
+        this.convertedBounds.set(bounds);
+        const [minLongitude, minLatitude, maxLongitude, maxLatitude] = bounds.bbox;
+        this.areaForm.patchValue({ minLongitude, minLatitude, maxLongitude, maxLatitude, zoom: bounds.zoom });
+      },
+      error: (error: unknown) => {
+        this.converting.set(false);
+        this.drawError.set(error instanceof Error ? error.message : 'The polygon could not be converted.');
+      },
+    });
+  }
+
+  protected finishDrawing(): void {
+    this.map?.finishDrawing();
   }
 
   protected loadAreas(): void {

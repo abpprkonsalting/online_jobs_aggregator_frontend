@@ -1,6 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ApiClient } from '../../../core/http/api-client';
+import type { Polygon as GeoJsonPolygon } from 'geojson';
 import {
   AdminFetchRun,
   AdminGeographicArea,
@@ -57,6 +58,14 @@ export class AdminApiService {
 
   listGeographicAreas(): Observable<AdminGeographicArea[]> {
     return this.api.get<AdminGeographicArea[]>('/admin/geographic-areas');
+  }
+
+  convertGeometry(geometry: GeoJsonPolygon): Observable<{ bbox: [number, number, number, number]; zoom: number }> {
+    return this.api.post('/admin/geographic-areas/from-geometry', { geometry });
+  }
+
+  geocode(address: string): Observable<{ lat: number; lng: number }> {
+    return this.api.post('/geocode', { address });
   }
 
   createGeographicArea(

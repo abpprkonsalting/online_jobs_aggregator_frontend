@@ -16,6 +16,7 @@ import { AdminSourceAreasPage } from './features/admin/pages/admin-source-areas-
 import { AdminFetchRunsPage } from './features/admin/pages/admin-fetch-runs-page';
 import { AdminFetchRunDetailPage } from './features/admin/pages/admin-fetch-run-detail-page';
 import { AdminMasterDataPage } from './features/admin/pages/admin-master-data-page';
+import { NotificationsPage } from './features/auth/pages/notifications-page';
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', component: HomePage },
@@ -38,6 +39,11 @@ export const routes: Routes = [
     path: 'account/saved-jobs',
     canActivate: [authGuard],
     component: SavedJobsPage,
+  },
+  {
+    path: 'account/notifications',
+    canActivate: [authGuard],
+    component: NotificationsPage,
   },
   {
     path: 'admin',

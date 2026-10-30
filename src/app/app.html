@@ -17,6 +17,9 @@
           <a routerLink="/account" routerLinkActive="active" ariaCurrentWhenActive="page">
             Account
           </a>
+          <a routerLink="/account/notifications" routerLinkActive="active" ariaCurrentWhenActive="page">
+            Notifications
+          </a>
           @if (authSession.currentUser()?.role === 'admin') {
             <a routerLink="/admin" routerLinkActive="active" ariaCurrentWhenActive="page">
               Admin
