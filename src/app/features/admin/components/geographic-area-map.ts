@@ -2,6 +2,17 @@ import { AfterViewInit, Component, ElementRef, EventEmitter, OnDestroy, Output, 
 import type { Map as LeafletMap, Polygon, LatLng } from 'leaflet';
 import type { Polygon as GeoJsonPolygon } from 'geojson';
 
+type LeafletApi = typeof import('leaflet');
+
+export function resolveLeafletApi(moduleValue: unknown): LeafletApi {
+  const namespace = moduleValue as { map?: unknown; default?: unknown } | null;
+  const api = typeof namespace?.map === 'function' ? namespace : namespace?.default;
+  if (!api || typeof (api as { map?: unknown }).map !== 'function') {
+    throw new Error('Leaflet failed to load: map API is unavailable.');
+  }
+  return api as LeafletApi;
+}
+
 @Component({
   selector: 'app-geographic-area-map',
   standalone: true,
@@ -25,7 +36,7 @@ export class GeographicAreaMap implements AfterViewInit, OnDestroy {
   private L?: typeof import('leaflet');
 
   async ngAfterViewInit(): Promise<void> {
-    this.L = await import('leaflet');
+    this.L = resolveLeafletApi(await import('leaflet'));
     const L = this.L;
     this.map = L.map(this.mapElement.nativeElement).setView([39.5, -98.35], 4);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
