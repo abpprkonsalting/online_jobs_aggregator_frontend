@@ -88,6 +88,7 @@ import { AdminFetchRun } from '../models/admin.models';
                         <td>{{ run.jobs_saved_new }}</td>
                         <td>{{ run.jobs_saved_updated }}</td>
                         <td class="details-cell">
+                          <div class="details-content">
                           @if (run.error_message) {
                             <p class="run-error">{{ run.error_message }}</p>
                           }
@@ -101,6 +102,7 @@ import { AdminFetchRun } from '../models/admin.models';
                           @if (!run.error_message && !run.warnings?.length) {
                             <span>—</span>
                           }
+                          </div>
                         </td>
                       </tr>
                     }
@@ -184,6 +186,7 @@ import { AdminFetchRun } from '../models/admin.models';
     .status-badge.success { background: #e3f4e9; color: #22623f; }
     .status-badge.failed { background: #fff0ec; color: #9b321d; }
     .details-cell { min-width: 15rem; }
+    .details-content { max-height: 8rem; overflow-y: auto; overflow-x: hidden; padding-right: 0.35rem; }
     .details-cell p { margin: 0; }
     .run-error { color: #9b321d; }
     .warning-list { margin: 0.35rem 0 0; padding-left: 1.25rem; color: #745000; }
