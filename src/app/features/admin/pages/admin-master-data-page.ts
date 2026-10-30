@@ -65,7 +65,7 @@ const slugValidator = Validators.pattern(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
             <div class="section-layout">
               <section class="admin-panel" aria-labelledby="categories-form-title">
                 <h2 id="categories-form-title">Add category</h2>
-                <form [formGroup]="categoryForm" (ngSubmit)="createCategory()">
+                <form class="category-form" [formGroup]="categoryForm" (ngSubmit)="createCategory()">
                   <div class="form-grid">
                     <div class="field"><label for="category-name">Name</label><input id="category-name" type="text" formControlName="name" />
                       @if (categoryForm.controls.name.touched && categoryForm.controls.name.hasError('required')) { <p class="field-error">Enter a category name.</p> }
@@ -91,7 +91,7 @@ const slugValidator = Validators.pattern(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
           @case ('skills') {
             <div class="section-layout">
               <section class="admin-panel" aria-labelledby="skills-form-title"><h2 id="skills-form-title">Add skill</h2>
-                <form [formGroup]="skillForm" (ngSubmit)="seedSkill()"><div class="form-grid">
+                <form class="stacked-form" [formGroup]="skillForm" (ngSubmit)="seedSkill()"><div class="form-grid">
                   <div class="field"><label for="skill-name">Name</label><input id="skill-name" type="text" formControlName="name" />@if (skillForm.controls.name.touched && skillForm.controls.name.hasError('required')) { <p class="field-error">Enter a skill name.</p> }</div>
                   <div class="field"><label for="skill-slug">Slug</label><input id="skill-slug" type="text" formControlName="slug" />@if (skillForm.controls.slug.touched && skillForm.controls.slug.invalid) { <p class="field-error">Use lowercase letters, numbers, and hyphens.</p> }</div>
                 </div><button type="submit" class="primary-button" [disabled]="saving()">Add skill</button></form>
@@ -103,7 +103,7 @@ const slugValidator = Validators.pattern(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
           }
           @case ('locations') {
             <div class="section-layout location-layout">
-              <section class="admin-panel" aria-labelledby="countries-form-title"><h2 id="countries-form-title">Add country</h2><form [formGroup]="countryForm" (ngSubmit)="seedCountry()"><div class="form-grid">
+              <section class="admin-panel" aria-labelledby="countries-form-title"><h2 id="countries-form-title">Add country</h2><form class="stacked-form" [formGroup]="countryForm" (ngSubmit)="seedCountry()"><div class="form-grid">
                 <div class="field"><label for="country-name">Name</label><input id="country-name" type="text" formControlName="name" />@if (countryForm.controls.name.touched && countryForm.controls.name.hasError('required')) { <p class="field-error">Enter a country name.</p> }</div>
                 <div class="field"><label for="country-code">Code (optional)</label><input id="country-code" type="text" formControlName="code" maxlength="10" /></div>
               </div><button type="submit" class="primary-button" [disabled]="saving()">Add country</button></form></section>
@@ -112,7 +112,7 @@ const slugValidator = Validators.pattern(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
               </section>
               <section class="admin-panel" aria-labelledby="cities-form-title"><h2 id="cities-form-title">Add city</h2>
                 @if (schema.value.countries.length === 0) { <p class="empty-message">Add a country before adding a city.</p> } @else {
-                  <form [formGroup]="cityForm" (ngSubmit)="seedCity()"><div class="form-grid"><div class="field"><label for="city-name">Name</label><input id="city-name" type="text" formControlName="name" />@if (cityForm.controls.name.touched && cityForm.controls.name.hasError('required')) { <p class="field-error">Enter a city name.</p> }</div>
+                  <form class="stacked-form" [formGroup]="cityForm" (ngSubmit)="seedCity()"><div class="form-grid"><div class="field"><label for="city-name">Name</label><input id="city-name" type="text" formControlName="name" />@if (cityForm.controls.name.touched && cityForm.controls.name.hasError('required')) { <p class="field-error">Enter a city name.</p> }</div>
                     <div class="field"><label for="city-country">Country</label><select id="city-country" formControlName="countryId"><option value="">Select a country</option>@for (country of schema.value.countries; track country.id) { <option [value]="country.id">{{ country.name }}</option> }</select>@if (cityForm.controls.countryId.touched && cityForm.controls.countryId.hasError('required')) { <p class="field-error">Select a country.</p> }</div></div><button type="submit" class="primary-button" [disabled]="saving()">Add city</button></form>
                 }
               </section>
@@ -123,7 +123,7 @@ const slugValidator = Validators.pattern(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
           }
           @case ('keywords') {
             <div class="section-layout">
-              <section class="admin-panel" aria-labelledby="keywords-form-title"><h2 id="keywords-form-title">Add keyword</h2><form [formGroup]="keywordForm" (ngSubmit)="createKeyword()"><div class="form-grid">
+              <section class="admin-panel" aria-labelledby="keywords-form-title"><h2 id="keywords-form-title">Add keyword</h2><form class="stacked-form" [formGroup]="keywordForm" (ngSubmit)="createKeyword()"><div class="form-grid">
                 <div class="field"><label for="keyword-name">Name</label><input id="keyword-name" type="text" formControlName="name" />@if (keywordForm.controls.name.touched && keywordForm.controls.name.hasError('required')) { <p class="field-error">Enter a keyword name.</p> }</div>
                 <div class="field"><label for="keyword-slug">Slug</label><input id="keyword-slug" type="text" formControlName="slug" />@if (keywordForm.controls.slug.touched && keywordForm.controls.slug.invalid) { <p class="field-error">Use lowercase letters, numbers, and hyphens.</p> }</div>
                 <div class="field"><label for="keyword-category">Optional default category</label><select id="keyword-category" formControlName="categoryId"><option value="">No default category</option>@for (category of schema.value.categories; track category.id) { <option [value]="category.id">{{ category.name }}</option> }</select></div>
@@ -188,6 +188,7 @@ const slugValidator = Validators.pattern(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
     h3 { margin: 0; font-size: 0.95rem; }
     form { display: grid; gap: 1rem; margin-top: 1rem; }
     .form-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.85rem; }
+    .category-form .form-grid, .stacked-form .form-grid { grid-template-columns: 1fr; }
     .field { display: grid; align-content: start; gap: 0.45rem; }
     label { font-size: 0.85rem; font-weight: 650; }
     input, select {
