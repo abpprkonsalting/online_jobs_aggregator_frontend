@@ -77,6 +77,20 @@ describe('AdminMasterDataPage', () => {
     });
   }
 
+  function selectSection(page: HTMLElement, label: string): void {
+    const button = [...page.querySelectorAll<HTMLButtonElement>('.data-tabs button')]
+      .find((candidate) => candidate.textContent?.trim() === label);
+    if (!button) throw new Error(`Missing master-data section: ${label}`);
+    button.click();
+  }
+
+  function submitFor(page: HTMLElement, selector: string): void {
+    const input = page.querySelector(selector);
+    const form = input?.closest('form');
+    if (!form) throw new Error(`Missing form for ${selector}`);
+    form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+  }
+
   function enter(page: HTMLElement, selector: string, value: string): void {
     const input = page.querySelector(selector) as HTMLInputElement;
     input.value = value;
@@ -108,10 +122,16 @@ describe('AdminMasterDataPage', () => {
 
     const page = pageHarness.routeNativeElement as HTMLElement;
     expect(page.querySelector('h1')?.textContent).toContain('Master data');
-    expect(page.textContent).toContain('Engineering (engineering)');
-    expect(page.textContent).toContain('TypeScript (typescript)');
-    expect(page.textContent).toContain('Boston');
-    expect(page.textContent).toContain('Angular (angular)');
+    expect(page.querySelector('tbody')?.textContent).toContain('Engineering');
+    selectSection(page, 'Skills');
+    pageHarness.detectChanges();
+    expect(page.querySelector('tbody')?.textContent).toContain('TypeScript');
+    selectSection(page, 'Locations');
+    pageHarness.detectChanges();
+    expect(page.querySelector('tbody')?.textContent).toContain('Boston');
+    selectSection(page, 'Keywords');
+    pageHarness.detectChanges();
+    expect(page.querySelector('tbody')?.textContent).toContain('Angular');
   });
 
   it('creates and refreshes a category, then creates a keyword and confirms its category link', async () => {
@@ -123,9 +143,7 @@ describe('AdminMasterDataPage', () => {
     enter(page, '#category-slug', 'design');
     (page.querySelector('#category-description') as HTMLInputElement).value = 'Product design';
     page.querySelector('#category-description')?.dispatchEvent(new Event('input', { bubbles: true }));
-    (page.querySelector('form') as HTMLFormElement).dispatchEvent(
-      new Event('submit', { bubbles: true, cancelable: true }),
-    );
+    submitFor(page, '#category-name');
 
     const createCategory = httpTesting.expectOne('/api/master/categories');
     expect(createCategory.request.method).toBe('POST');
@@ -149,14 +167,14 @@ describe('AdminMasterDataPage', () => {
     httpTesting.expectOne('/api/master/category-keywords').flush([]);
     pageHarness.detectChanges();
 
+    selectSection(page, 'Keywords');
+    pageHarness.detectChanges();
     enter(page, '#keyword-name', 'Figma');
     enter(page, '#keyword-slug', 'figma');
     const keywordCategory = page.querySelector('#keyword-category') as HTMLSelectElement;
     keywordCategory.value = design.id;
     keywordCategory.dispatchEvent(new Event('change', { bubbles: true }));
-    (page.querySelectorAll('form')[4] as HTMLFormElement).dispatchEvent(
-      new Event('submit', { bubbles: true, cancelable: true }),
-    );
+    submitFor(page, '#keyword-name');
 
     const createKeyword = httpTesting.expectOne('/api/master/keywords');
     expect(createKeyword.request.body).toEqual({
@@ -190,15 +208,15 @@ describe('AdminMasterDataPage', () => {
     httpTesting.expectOne('/api/master/category-keywords').flush([]);
     pageHarness.detectChanges();
 
+    selectSection(page, 'Category-keyword links');
+    pageHarness.detectChanges();
     const categorySelect = page.querySelector('#link-category') as HTMLSelectElement;
     categorySelect.value = design.id;
     categorySelect.dispatchEvent(new Event('change', { bubbles: true }));
     const keywordSelect = page.querySelector('#link-keyword') as HTMLSelectElement;
     keywordSelect.value = keyword.id;
     keywordSelect.dispatchEvent(new Event('change', { bubbles: true }));
-    (page.querySelectorAll('form')[5] as HTMLFormElement).dispatchEvent(
-      new Event('submit', { bubbles: true, cancelable: true }),
-    );
+    submitFor(page, '#link-category');
 
     const link = httpTesting.expectOne('/api/master/category-keywords');
     expect(link.request.body).toEqual({ category_id: design.id, keyword_id: keyword.id });
@@ -218,11 +236,11 @@ describe('AdminMasterDataPage', () => {
     pageHarness.detectChanges();
     const page = pageHarness.routeNativeElement as HTMLElement;
 
+    selectSection(page, 'Skills');
+    pageHarness.detectChanges();
     enter(page, '#skill-name', 'Go');
     enter(page, '#skill-slug', 'go');
-    (page.querySelectorAll('form')[1] as HTMLFormElement).dispatchEvent(
-      new Event('submit', { bubbles: true, cancelable: true }),
-    );
+    submitFor(page, '#skill-name');
     const skillRequest = httpTesting.expectOne('/api/master/seed-skills');
     expect(skillRequest.request.body).toEqual({ skills: [{ name: 'Go', slug: 'go' }] });
     skillRequest.flush({ seeded: 1 });
@@ -235,11 +253,11 @@ describe('AdminMasterDataPage', () => {
     httpTesting.expectOne('/api/master/category-keywords').flush([]);
     pageHarness.detectChanges();
 
+    selectSection(page, 'Locations');
+    pageHarness.detectChanges();
     enter(page, '#country-name', 'Canada');
     enter(page, '#country-code', 'CA');
-    (page.querySelectorAll('form')[2] as HTMLFormElement).dispatchEvent(
-      new Event('submit', { bubbles: true, cancelable: true }),
-    );
+    submitFor(page, '#country-name');
     const countryRequest = httpTesting.expectOne('/api/master/seed-countries');
     expect(countryRequest.request.body).toEqual({ countries: [{ name: 'Canada', code: 'CA' }] });
     countryRequest.flush({ seeded: 1 });
@@ -257,9 +275,7 @@ describe('AdminMasterDataPage', () => {
     const cityCountry = page.querySelector('#city-country') as HTMLSelectElement;
     cityCountry.value = canada.id;
     cityCountry.dispatchEvent(new Event('change', { bubbles: true }));
-    (page.querySelectorAll('form')[3] as HTMLFormElement).dispatchEvent(
-      new Event('submit', { bubbles: true, cancelable: true }),
-    );
+    submitFor(page, '#city-name');
     const cityRequest = httpTesting.expectOne('/api/master/seed-cities');
     expect(cityRequest.request.body).toEqual({ cities: [{ name: 'Toronto', country_id: canada.id }] });
     cityRequest.flush({ seeded: 1 });
@@ -285,9 +301,7 @@ describe('AdminMasterDataPage', () => {
     const page = pageHarness.routeNativeElement as HTMLElement;
     enter(page, '#category-name', 'Bad category');
     enter(page, '#category-slug', 'Bad Slug');
-    (page.querySelector('form') as HTMLFormElement).dispatchEvent(
-      new Event('submit', { bubbles: true, cancelable: true }),
-    );
+    submitFor(page, '#category-name');
     pageHarness.detectChanges();
 
     expect(page.textContent).toContain('Use lowercase letters, numbers, and hyphens.');
