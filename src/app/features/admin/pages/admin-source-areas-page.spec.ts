@@ -20,6 +20,7 @@ import { AdminSourceAreasPage } from './admin-source-areas-page';
 const source: AdminSource = {
   id: 'source-1',
   name: 'Example source',
+  code_id: 'ReziJobSource',
   type: 'api',
   working_mode: 'both',
   config: {},

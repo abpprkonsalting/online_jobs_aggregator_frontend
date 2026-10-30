@@ -17,6 +17,7 @@ import { AdminSourcesPage } from './admin-sources-page';
 const source: AdminSource = {
   id: 'source-1',
   name: 'Example source',
+  code_id: 'ReziJobSource',
   type: 'api',
   working_mode: 'both',
   config: { endpoint: 'https://example.com/jobs' },
@@ -84,6 +85,9 @@ describe('AdminSourcesPage', () => {
     const page = pageHarness.routeNativeElement as HTMLElement;
     (page.querySelector('#source-name') as HTMLInputElement).value = 'New source';
     page.querySelector('#source-name')?.dispatchEvent(new Event('input', { bubbles: true }));
+    const codeId = page.querySelector('#source-code-id') as HTMLInputElement;
+    codeId.value = 'NewAdapter';
+    codeId.dispatchEvent(new Event('input', { bubbles: true }));
     const type = page.querySelector('#source-type') as HTMLSelectElement;
     type.value = 'scrape';
     type.dispatchEvent(new Event('change', { bubbles: true }));
@@ -101,12 +105,13 @@ describe('AdminSourcesPage', () => {
     expect(create.request.method).toBe('POST');
     expect(create.request.body).toEqual({
       name: 'New source',
+      code_id: 'NewAdapter',
       type: 'scrape',
       working_mode: 'proactive',
       config: { url: 'https://example.com/jobs', headers: { 'x-test': 'yes' } },
       enabled: true,
     });
-    const created = { ...source, id: 'source-2', name: 'New source', type: 'scrape' as const, working_mode: 'proactive' as const };
+    const created = { ...source, id: 'source-2', name: 'New source', type: 'scrape' as const, working_mode: 'proactive' as const, code_id: 'NewAdapter' };
     create.flush(created, { status: 201, statusText: 'Created' });
     httpTesting.expectOne('/api/admin/sources').flush([created]);
     pageHarness.detectChanges();
@@ -132,6 +137,9 @@ describe('AdminSourcesPage', () => {
     const name = page.querySelector('#source-name') as HTMLInputElement;
     name.value = 'Updated source';
     name.dispatchEvent(new Event('input', { bubbles: true }));
+    const codeId = page.querySelector('#source-code-id') as HTMLInputElement;
+    codeId.value = 'UpdatedAdapter';
+    codeId.dispatchEvent(new Event('input', { bubbles: true }));
     const enabled = page.querySelector('#source-enabled') as HTMLSelectElement;
     enabled.value = enabled.options[1].value;
     enabled.dispatchEvent(new Event('change', { bubbles: true }));
@@ -146,11 +154,12 @@ describe('AdminSourcesPage', () => {
     expect(update.request.method).toBe('PATCH');
     expect(update.request.body).toEqual({
       name: 'Updated source',
+      code_id: 'UpdatedAdapter',
       working_mode: 'both',
       config: { endpoint: 'https://example.com/updated', limit: 25 },
       enabled: false,
     });
-    const updated = { ...source, name: 'Updated source', enabled: 0, config: { endpoint: 'https://example.com/updated', limit: 25 } };
+    const updated = { ...source, name: 'Updated source', code_id: 'UpdatedAdapter', enabled: 0, config: { endpoint: 'https://example.com/updated', limit: 25 } };
     update.flush(updated);
     httpTesting.expectOne('/api/admin/sources').flush([updated]);
     pageHarness.detectChanges();

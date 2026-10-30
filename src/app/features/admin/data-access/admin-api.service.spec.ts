@@ -74,6 +74,7 @@ describe('AdminApiService', () => {
 
     const createBody = {
       name: 'Example source',
+      code_id: 'ReziJobSource',
       type: 'api' as const,
       working_mode: 'both' as const,
       config: { endpoint: 'https://example.com/jobs' },
@@ -85,7 +86,7 @@ describe('AdminApiService', () => {
     expect(create.request.body).toEqual(createBody);
     create.flush({ id: 'source-1', ...createBody, last_run_at: null, next_run_at: null });
 
-    const updateBody = { name: 'Updated source', enabled: false };
+    const updateBody = { name: 'Updated source', code_id: 'UpdatedAdapter', enabled: false };
     service.updateSource('source-1', updateBody).subscribe();
     const update = httpTesting.expectOne('/api/admin/sources/source-1');
     expect(update.request.method).toBe('PATCH');
