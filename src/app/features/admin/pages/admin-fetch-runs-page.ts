@@ -1,5 +1,6 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { FormatDatePipe } from '../../../core/pipes/format-date.pipe';
 import { ApiError } from '../../../core/http/api-error';
 import { AsyncState } from '../../../core/models/async-state';
 import { AdminApiService } from '../data-access/admin-api.service';
@@ -7,7 +8,7 @@ import { AdminFetchRun } from '../models/admin.models';
 
 @Component({
   selector: 'app-admin-fetch-runs-page',
-  imports: [RouterLink],
+  imports: [RouterLink, FormatDatePipe],
   template: `
     <section class="admin-page" aria-labelledby="page-title">
       <header class="page-header">
@@ -81,8 +82,8 @@ import { AdminFetchRun } from '../models/admin.models';
                           </span>
                         </td>
                         <td>{{ run.source_id ?? 'Not associated with a source' }}</td>
-                        <td>{{ run.started_at }}</td>
-                        <td>{{ run.finished_at ?? 'In progress' }}</td>
+                        <td>{{ (run.started_at | formatDate:true) }}</td>
+                        <td>{{ (run.finished_at | formatDate:true) ?? 'In progress' }}</td>
                         <td>{{ run.jobs_found }}</td>
                         <td>{{ run.jobs_saved_new }}</td>
                         <td>{{ run.jobs_saved_updated }}</td>

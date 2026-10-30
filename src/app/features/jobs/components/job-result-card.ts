@@ -3,6 +3,7 @@ import { RouterLink } from '@angular/router';
 import { JobListItem } from '../../../core/models/api.models';
 import { JobsApiService } from '../data-access/jobs-api.service';
 import { ApiError } from '../../../core/http/api-error';
+import { formatDate } from '../../../core/utils/date.util';
 
 @Component({
   selector: 'app-job-result-card',
@@ -223,10 +224,8 @@ export class JobResultCard {
       return null;
     }
 
-    const date = new Date(value);
-    return Number.isNaN(date.getTime())
-      ? null
-      : `Posted ${date.toLocaleDateString()}`;
+    const formatted = formatDate(value);
+    return formatted ? `Posted ${formatted}` : null;
   });
 
   protected toggleSave(): void {

@@ -5,6 +5,7 @@ import { ApiError } from '../../../core/http/api-error';
 import { AsyncState } from '../../../core/models/async-state';
 import { JobDetail } from '../../../core/models/api.models';
 import { JobsApiService } from '../data-access/jobs-api.service';
+import { formatDate } from '../../../core/utils/date.util';
 
 @Component({
   selector: 'app-job-detail-page',
@@ -425,8 +426,8 @@ export class JobDetailPage implements OnInit {
 
     const value = current.value.posted_at ?? current.value.date_posted;
     if (!value) return null;
-    const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? null : `Posted ${date.toLocaleDateString()}`;
+    const formatted = formatDate(value);
+    return formatted ? `Posted ${formatted}` : null;
   });
 
   protected readonly daysWaitingLabel = computed(() => {

@@ -1,6 +1,7 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { FormatDatePipe } from '../../../core/pipes/format-date.pipe';
 import { ApiError } from '../../../core/http/api-error';
 import { AsyncState } from '../../../core/models/async-state';
 import { AdminApiService } from '../data-access/admin-api.service';
@@ -8,7 +9,7 @@ import { AdminGeographicArea, AdminSource, AdminSourceArea } from '../models/adm
 
 @Component({
   selector: 'app-admin-source-areas-page',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, FormatDatePipe],
   template: `
     <section class="admin-page" aria-labelledby="page-title">
       <header class="page-header">
@@ -148,8 +149,8 @@ import { AdminGeographicArea, AdminSource, AdminSourceArea } from '../models/adm
                         <td>{{ assignment.source_name }}</td>
                         <td>{{ assignment.area_name }}</td>
                         <td>{{ assignment.enabled ? 'Enabled' : 'Disabled' }}</td>
-                        <td>{{ assignment.last_run_at ?? 'Never' }}</td>
-                        <td>{{ assignment.next_run_at ?? 'Not scheduled' }}</td>
+                        <td>{{ (assignment.last_run_at | formatDate:true) ?? 'Never' }}</td>
+                        <td>{{ (assignment.next_run_at | formatDate:true) ?? 'Not scheduled' }}</td>
                         <td>
                           <button
                             type="button"
