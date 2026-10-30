@@ -40,6 +40,10 @@ export class AdminApiService {
     return this.api.delete<AdminMutationResponse>(`/users/${encodeURIComponent(userId)}`);
   }
 
+  sendTestNotification(email: string): Observable<{ success: boolean; channels: string[] }> {
+    return this.api.post<{ success: boolean; channels: string[] }>('/admin/notifications/test', { email });
+  }
+
   listSources(): Observable<AdminSource[]> {
     return this.api.get<AdminSource[]>('/admin/sources');
   }

@@ -80,6 +80,31 @@ import { AdminUser } from '../models/admin.models';
         </form>
       </section>
 
+      <section class="admin-panel" aria-labelledby="test-email-title">
+        <h2 id="test-email-title">Test email delivery</h2>
+        <p>Send a one-off test message through the enabled notification channel to verify its configuration.</p>
+        @if (testEmailError(); as error) {
+          <p class="error-message" role="alert">{{ error }}</p>
+        }
+        @if (testEmailMessage(); as message) {
+          <p class="success-message" role="status" aria-live="polite">{{ message }}</p>
+        }
+        <form [formGroup]="testEmailForm" (ngSubmit)="sendTestEmail()">
+          <div class="field">
+            <label for="test-email-address">Recipient email</label>
+            <input id="test-email-address" type="email" formControlName="email" autocomplete="email" />
+            @if (testEmailForm.controls.email.touched && testEmailForm.controls.email.hasError('required')) {
+              <p class="field-error">Enter an email address.</p>
+            } @else if (testEmailForm.controls.email.touched && testEmailForm.controls.email.hasError('email')) {
+              <p class="field-error">Enter a valid email address.</p>
+            }
+          </div>
+          <button type="submit" class="primary-button" [disabled]="sendingTestEmail()">
+            {{ sendingTestEmail() ? 'Sending…' : 'Send test email' }}
+          </button>
+        </form>
+      </section>
+
       <section class="admin-panel users-panel" aria-labelledby="users-title">
         <div class="section-heading">
           <h2 id="users-title">Users</h2>
@@ -352,6 +377,12 @@ export class AdminUsersPage implements OnInit {
   protected readonly mutationError = signal<string | null>(null);
   protected readonly mutationMessage = signal<string | null>(null);
   protected readonly mutatingUserId = signal<string | null>(null);
+  protected readonly sendingTestEmail = signal(false);
+  protected readonly testEmailError = signal<string | null>(null);
+  protected readonly testEmailMessage = signal<string | null>(null);
+  protected readonly testEmailForm = new FormGroup({
+    email: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.email] }),
+  });
   protected readonly userForm = new FormGroup({
     email: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.email] }),
     password: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.minLength(6)] }),
@@ -396,6 +427,28 @@ export class AdminUsersPage implements OnInit {
             ? error.message
             : 'An unexpected error occurred while creating the user.',
         );
+      },
+    });
+  }
+
+  protected sendTestEmail(): void {
+    if (this.sendingTestEmail()) return;
+    if (this.testEmailForm.invalid) {
+      this.testEmailForm.markAllAsTouched();
+      return;
+    }
+
+    this.sendingTestEmail.set(true);
+    this.testEmailError.set(null);
+    this.testEmailMessage.set(null);
+    this.adminApi.sendTestNotification(this.testEmailForm.controls.email.value.trim()).subscribe({
+      next: (response) => {
+        this.sendingTestEmail.set(false);
+        this.testEmailMessage.set(`Test email sent via ${response.channels.join(', ')}.`);
+      },
+      error: (error: unknown) => {
+        this.sendingTestEmail.set(false);
+        this.testEmailError.set(error instanceof Error ? error.message : 'Could not send the test email.');
       },
     });
   }
